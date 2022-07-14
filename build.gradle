@@ -28,6 +28,7 @@ dependencies {
 
     implementation 'com.github.ben-manes.caffeine:caffeine:3.1.1'
 
+    implementation 'commons-beanutils:commons-beanutils:1.9.4'
     implementation 'org.apache.commons:commons-configuration2:2.8.0'
 
     implementation "org.apache.commons:commons-csv:1.9.0"
