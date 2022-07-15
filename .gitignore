@@ -179,4 +179,4 @@ gradle-app.setting
 paho*
 
 #Dev properties
-src/main/kotlin/resources/dev.properties
+src/main/resources/dev.properties
