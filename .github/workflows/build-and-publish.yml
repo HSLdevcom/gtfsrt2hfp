@@ -1,0 +1,67 @@
+name: Publish release
+on:
+  push:
+    tags:
+      - '**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up JDK 11
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'adopt'
+          java-version: '11'
+          cache: 'gradle'
+      - name: Build fat .jar with Gradle
+        run: ./gradlew shadowJar --no-daemon
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload .jar file
+        uses: actions/upload-artifact@v2
+        with:
+          name: gtfsrt2hfp.jar
+          path: build/libs/gtfsrt2hfp.jar
+  publish-develop-image:
+    needs: build
+    runs-on: ubuntu-latest
+    # Run only on master branch
+    if: github.ref == 'refs/heads/master'
+    steps:
+      - uses: actions/checkout@v3
+      - name: Download .jar file
+        uses: actions/download-artifact@v2
+        with:
+          name: gtfsrt2hfp.jar
+          path: build/libs
+      - name: Build and publish release Docker image
+        uses: elgohr/Publish-Docker-Github-Action@v4
+        with:
+          name: hsldevcom/gtfsrt2hfp
+          username: ${{ secrets.TRANSITDATA_DOCKERHUB_USER  }}
+          password: ${{ secrets.TRANSITDATA_DOCKERHUB_TOKEN }}
+          tags: "develop"
+  publish-prod-image:
+    needs: build
+    runs-on: ubuntu-latest
+    # Run only for tagged commits
+    if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
+    steps:
+      - uses: actions/checkout@v3
+      - name: Download .jar file
+        uses: actions/download-artifact@v2
+        with:
+          name: gtfsrt2hfp.jar
+          path: build/libs
+      - name: Get Git tag name
+        id: git_tag
+        run: echo ::set-output name=GIT_TAG::${GITHUB_REF/refs\/tags\//}
+      - name: Build and publish release Docker image
+        uses: elgohr/Publish-Docker-Github-Action@v4
+        with:
+          name: hsldevcom/gtfsrt2hfp
+          username: ${{ secrets.TRANSITDATA_DOCKERHUB_USER  }}
+          password: ${{ secrets.TRANSITDATA_DOCKERHUB_TOKEN }}
+          tags: "latest,${{ steps.git_tag.outputs.GIT_TAG }}"
