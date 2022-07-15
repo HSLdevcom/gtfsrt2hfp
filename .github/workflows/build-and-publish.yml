@@ -1,8 +1,6 @@
-name: Publish release
-on:
-  push:
-    tags:
-      - '**'
+name: Build .jar and publish Docker image
+
+on: [push]
 
 jobs:
   build:
