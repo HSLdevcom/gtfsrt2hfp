@@ -17,11 +17,17 @@ import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
 import org.eclipse.paho.client.mqttv3.*
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence
+import java.math.RoundingMode
 import java.net.http.HttpClient
 import java.nio.charset.StandardCharsets
 import java.time.Duration
+import kotlin.math.roundToInt
+import kotlin.properties.Delegates
 import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.nanoseconds
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.DurationUnit
 import kotlin.time.ExperimentalTime
 
 private val log = KotlinLogging.logger {}
@@ -103,16 +109,38 @@ private suspend fun createAndConnectMqttClient(serverUri: String, disconnectedBu
         bufferSize = disconnectedBufferSize
     })
     mqttAsyncClient.setCallback(object : MqttCallbackExtended {
+        private var start by Delegates.notNull<Long>()
+        private var messagesSent: Int = 0
+
+        private fun resetStats(logStats: Boolean) {
+            if (logStats) {
+                val seconds = (System.nanoTime() - start).nanoseconds.toDouble(DurationUnit.SECONDS)
+                val msgPerSecond = (messagesSent / seconds).toBigDecimal().setScale(2, RoundingMode.HALF_UP)
+                log.info { "$messagesSent MQTT messages sent in last ${seconds.roundToInt()} seconds (${msgPerSecond.toPlainString()} msg/s)" }
+            }
+
+            start = System.nanoTime()
+            messagesSent = 0
+        }
+
         override fun connectionLost(cause: Throwable) {
             log.warn(cause) { "Lost connection to MQTT broker at $serverUri" }
         }
 
         override fun messageArrived(topic: String, message: MqttMessage) { }
 
-        override fun deliveryComplete(token: IMqttDeliveryToken) { }
+        override fun deliveryComplete(token: IMqttDeliveryToken) {
+            messagesSent++
+
+            if ((System.nanoTime() - start).nanoseconds > 1.minutes) {
+                resetStats(true)
+            }
+        }
 
         override fun connectComplete(reconnect: Boolean, serverURI: String) {
             log.info { "Connected to MQTT broker at $serverURI, reconnect: $reconnect" }
+
+            resetStats(false)
         }
     })
     log.info { "Connecting to MQTT broker at $serverUri" }
