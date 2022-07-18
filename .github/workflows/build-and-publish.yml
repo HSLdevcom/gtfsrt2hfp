@@ -34,11 +34,11 @@ jobs:
         with:
           name: gtfsrt2hfp.jar
           path: build/libs
-      - name: Build and publish release Docker image
+      - name: Build and publish develop Docker image
         uses: elgohr/Publish-Docker-Github-Action@v4
         with:
           name: hsldevcom/gtfsrt2hfp
-          username: ${{ secrets.TRANSITDATA_DOCKERHUB_USER  }}
+          username: ${{ secrets.TRANSITDATA_DOCKERHUB_USER }}
           password: ${{ secrets.TRANSITDATA_DOCKERHUB_TOKEN }}
           tags: "develop"
   publish-prod-image:
@@ -60,6 +60,6 @@ jobs:
         uses: elgohr/Publish-Docker-Github-Action@v4
         with:
           name: hsldevcom/gtfsrt2hfp
-          username: ${{ secrets.TRANSITDATA_DOCKERHUB_USER  }}
+          username: ${{ secrets.TRANSITDATA_DOCKERHUB_USER }}
           password: ${{ secrets.TRANSITDATA_DOCKERHUB_TOKEN }}
           tags: "latest,${{ steps.git_tag.outputs.GIT_TAG }}"
