@@ -15,14 +15,19 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
+import org.apache.commons.cli.DefaultParser
+import org.apache.commons.cli.HelpFormatter
+import org.apache.commons.cli.Options
 import org.eclipse.paho.client.mqttv3.*
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence
 import java.math.RoundingMode
 import java.net.http.HttpClient
 import java.nio.charset.StandardCharsets
+import java.nio.file.Paths
 import java.time.Duration
 import kotlin.math.roundToInt
 import kotlin.properties.Delegates
+import kotlin.system.exitProcess
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.nanoseconds
@@ -33,8 +38,21 @@ import kotlin.time.ExperimentalTime
 private val log = KotlinLogging.logger {}
 
 @ExperimentalTime
-fun main() {
-    val configuration = ConfigLoader.loadConfigFromResource("dev.properties")
+fun main(vararg args: String) {
+    val options = Options().apply {
+        addOption("f", true, "Path to configuration file")
+        addOption("r", true, "Configuration resource name")
+    }
+    val cli = DefaultParser().parse(options, args)
+
+    val configuration = if (cli.hasOption("f")) {
+        ConfigLoader.loadConfigFromFile(Paths.get(cli.getOptionValue("f")))
+    } else if (cli.hasOption("r")) {
+        ConfigLoader.loadConfigFromResource(cli.getOptionValue("r"))
+    } else {
+        HelpFormatter().printHelp("gtfsrt2hfp", options)
+        exitProcess(1)
+    }
 
     val gtfsFeedUrlA = configuration.getString("gtfs.url.a")!!
     val gtfsFeedUrlB = configuration.getString("gtfs.url.b")!!
