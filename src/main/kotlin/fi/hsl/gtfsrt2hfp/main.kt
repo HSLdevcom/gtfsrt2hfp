@@ -1,15 +1,15 @@
 package fi.hsl.gtfsrt2hfp
 
 import fi.hsl.gtfsrt2hfp.fi.hsl.gtfsrt2hfp.GtfsRtToHfpConverter
-import fi.hsl.gtfsrt2hfp.fi.hsl.gtfsrt2hfp.gtfs.GtfsFeedFetcher
-import fi.hsl.gtfsrt2hfp.fi.hsl.gtfsrt2hfp.gtfs.utils.GtfsIndex
-import fi.hsl.gtfsrt2hfp.fi.hsl.gtfsrt2hfp.gtfsrt.GtfsRtFeedFetcher
-import fi.hsl.gtfsrt2hfp.fi.hsl.gtfsrt2hfp.hfp.model.HfpPayload
-import fi.hsl.gtfsrt2hfp.fi.hsl.gtfsrt2hfp.hfp.model.HfpTopic
-import fi.hsl.gtfsrt2hfp.fi.hsl.gtfsrt2hfp.utils.ConfigLoader
-import fi.hsl.gtfsrt2hfp.fi.hsl.gtfsrt2hfp.utils.connectAsync
-import fi.hsl.gtfsrt2hfp.fi.hsl.gtfsrt2hfp.utils.launchTimedTask
-import fi.hsl.gtfsrt2hfp.fi.hsl.gtfsrt2hfp.utils.publishAsync
+import fi.hsl.gtfsrt2hfp.gtfs.GtfsFeedFetcher
+import fi.hsl.gtfsrt2hfp.gtfs.utils.GtfsIndex
+import fi.hsl.gtfsrt2hfp.gtfsrt.GtfsRtFeedFetcher
+import fi.hsl.gtfsrt2hfp.hfp.model.HfpPayload
+import fi.hsl.gtfsrt2hfp.hfp.model.HfpTopic
+import fi.hsl.gtfsrt2hfp.utils.ConfigLoader
+import fi.hsl.gtfsrt2hfp.utils.connectAsync
+import fi.hsl.gtfsrt2hfp.utils.launchTimedTask
+import fi.hsl.gtfsrt2hfp.utils.publishAsync
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
@@ -102,7 +102,7 @@ fun main(vararg args: String) {
                 val gtfsRtFeed = gtfsRtFeedFetcher.fetchGtfsRtFeed(gtfsRtFeedUrl, gtfsRtHttpHeaders)
                 val feedEntitiesWithVehiclePosition = gtfsRtFeed.entityList.filter { it.hasVehicle() }
 
-                val vehiclePositionsByVehicleId = feedEntitiesWithVehiclePosition.map { it.vehicle }.groupBy { it.vehicle.id }
+                val vehiclePositionsByVehicleId = feedEntitiesWithVehiclePosition.map { it.vehicle!! }.groupBy { it.vehicle.id!! }
                 //Feed can contain multiple vehicle positions for same vehicle -> use vehicle position with latest timestamp
                 val latestVehiclePositionByVehicleId = vehiclePositionsByVehicleId.mapValues { it.value.maxByOrNull { it.timestamp } }.filterValues { it != null }
 

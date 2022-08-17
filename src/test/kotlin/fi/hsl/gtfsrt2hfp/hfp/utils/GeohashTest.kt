@@ -1,6 +1,5 @@
 package fi.hsl.gtfsrt2hfp.hfp.utils
 
-import fi.hsl.gtfsrt2hfp.fi.hsl.gtfsrt2hfp.hfp.utils.getGeohash
 import kotlin.test.Test
 import kotlin.test.assertEquals
 

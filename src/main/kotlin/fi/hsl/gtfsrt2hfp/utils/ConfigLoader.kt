@@ -1,4 +1,4 @@
-package fi.hsl.gtfsrt2hfp.fi.hsl.gtfsrt2hfp.utils
+package fi.hsl.gtfsrt2hfp.utils
 
 import org.apache.commons.configuration2.FileBasedConfiguration
 import org.apache.commons.configuration2.ImmutableConfiguration

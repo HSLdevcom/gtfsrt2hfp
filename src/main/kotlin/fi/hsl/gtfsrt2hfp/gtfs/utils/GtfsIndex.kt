@@ -1,8 +1,8 @@
-package fi.hsl.gtfsrt2hfp.fi.hsl.gtfsrt2hfp.gtfs.utils
+package fi.hsl.gtfsrt2hfp.gtfs.utils
 
-import fi.hsl.gtfsrt2hfp.fi.hsl.gtfsrt2hfp.gtfs.GtfsFeed
-import fi.hsl.gtfsrt2hfp.fi.hsl.gtfsrt2hfp.gtfs.model.*
-import fi.hsl.gtfsrt2hfp.fi.hsl.gtfsrt2hfp.gtfs.model.Calendar
+import fi.hsl.gtfsrt2hfp.gtfs.model.Calendar
+import fi.hsl.gtfsrt2hfp.gtfs.GtfsFeed
+import fi.hsl.gtfsrt2hfp.gtfs.model.*
 import java.util.*
 
 class GtfsIndex(stops: List<Stop>, routes: List<Route>, trips: List<Trip>, stopTimes: List<StopTime>, calendars: List<Calendar>?, calendarDates: List<CalendarDate>?) {

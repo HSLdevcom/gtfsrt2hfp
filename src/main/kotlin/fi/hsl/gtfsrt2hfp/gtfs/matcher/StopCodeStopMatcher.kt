@@ -1,12 +1,13 @@
-package fi.hsl.gtfsrt2hfp.fi.hsl.gtfsrt2hfp.gtfs.matcher
+package fi.hsl.gtfsrt2hfp.gtfs.matcher
 
-import fi.hsl.gtfsrt2hfp.fi.hsl.gtfsrt2hfp.gtfs.model.Stop
-import fi.hsl.gtfsrt2hfp.fi.hsl.gtfsrt2hfp.gtfs.utils.GtfsIndex
+import fi.hsl.gtfsrt2hfp.gtfs.model.Stop
+import fi.hsl.gtfsrt2hfp.gtfs.utils.GtfsIndex
 
 /**
  * Matches stops from GTFS feed A to GTFS feed B by comparing their stop codes (stop_code column in stops.txt)
  */
-class StopCodeStopMatcher(private val stopsByIdA: Map<String, Stop>, private val stopsByIdB: Map<String, Stop>) : StopMatcher {
+class StopCodeStopMatcher(private val stopsByIdA: Map<String, Stop>, private val stopsByIdB: Map<String, Stop>) :
+    StopMatcher {
     constructor(gtfsIndexA: GtfsIndex, gtfsIndexB: GtfsIndex) : this(gtfsIndexA.stopsById, gtfsIndexB.stopsById)
 
     private val matchedStops by lazy {

@@ -1,4 +1,4 @@
-package fi.hsl.gtfsrt2hfp.fi.hsl.gtfsrt2hfp.hfp.utils
+package fi.hsl.gtfsrt2hfp.hfp.utils
 
 import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
@@ -48,7 +48,9 @@ class GeohashCalculator(cacheDuration: Duration = Duration.ofHours(2)) {
             } else if (cacheValuePrev.latitude?.toInt() != cacheValueNew.latitude?.toInt() || cacheValuePrev.longitude?.toInt() != cacheValueNew.longitude?.toInt() ){
                 0
             } else {
-                min(Companion.getGeohashLevel(cacheValuePrev.latitude!!, cacheValueNew.latitude!!), Companion.getGeohashLevel(cacheValuePrev.longitude!!, cacheValueNew.longitude!!)).coerceAtMost(MAX_GEOHASH_LEVEL)
+                min(getGeohashLevel(cacheValuePrev.latitude!!, cacheValueNew.latitude!!), getGeohashLevel(cacheValuePrev.longitude!!, cacheValueNew.longitude!!)).coerceAtMost(
+                    MAX_GEOHASH_LEVEL
+                )
             }
         }
     }

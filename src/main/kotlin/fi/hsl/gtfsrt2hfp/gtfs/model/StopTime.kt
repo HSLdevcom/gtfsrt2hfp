@@ -1,4 +1,4 @@
-package fi.hsl.gtfsrt2hfp.fi.hsl.gtfsrt2hfp.gtfs.model
+package fi.hsl.gtfsrt2hfp.gtfs.model
 
 data class StopTime(val tripId: String, val arrivalTime: Int, val departureTime: Int, val stopId: String, val stopSequence: Int) : Comparable<StopTime> {
     override fun compareTo(other: StopTime): Int {

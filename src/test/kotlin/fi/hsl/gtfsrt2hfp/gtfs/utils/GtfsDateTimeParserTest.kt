@@ -1,7 +1,5 @@
 package fi.hsl.gtfsrt2hfp.gtfs.utils
 
-import fi.hsl.gtfsrt2hfp.fi.hsl.gtfsrt2hfp.gtfs.utils.parseGtfsDate
-import fi.hsl.gtfsrt2hfp.fi.hsl.gtfsrt2hfp.gtfs.utils.parseGtfsTime
 import org.junit.jupiter.api.assertThrows
 import java.time.LocalDate
 import kotlin.test.Test

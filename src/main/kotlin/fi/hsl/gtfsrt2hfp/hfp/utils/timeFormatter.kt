@@ -1,4 +1,4 @@
-package fi.hsl.gtfsrt2hfp.fi.hsl.gtfsrt2hfp.hfp.utils
+package fi.hsl.gtfsrt2hfp.hfp.utils
 
 fun formatHfpTime(seconds: Int): String {
     val time = seconds % 86400 //HFP time is always in 24h format

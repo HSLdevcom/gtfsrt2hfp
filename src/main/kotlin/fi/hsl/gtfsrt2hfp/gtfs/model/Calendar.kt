@@ -1,4 +1,4 @@
-package fi.hsl.gtfsrt2hfp.fi.hsl.gtfsrt2hfp.gtfs.model
+package fi.hsl.gtfsrt2hfp.gtfs.model
 
 import java.time.DayOfWeek
 import java.time.LocalDate

@@ -1,4 +1,4 @@
-package fi.hsl.gtfsrt2hfp.fi.hsl.gtfsrt2hfp.hfp.model
+package fi.hsl.gtfsrt2hfp.hfp.model
 
 data class HfpTopic(
     val prefix: String,

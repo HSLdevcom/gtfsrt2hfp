@@ -1,4 +1,4 @@
-package fi.hsl.gtfsrt2hfp.fi.hsl.gtfsrt2hfp.gtfs.utils
+package fi.hsl.gtfsrt2hfp.gtfs.utils
 
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter

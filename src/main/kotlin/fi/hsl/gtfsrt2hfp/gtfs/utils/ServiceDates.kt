@@ -1,7 +1,7 @@
-package fi.hsl.gtfsrt2hfp.fi.hsl.gtfsrt2hfp.gtfs.utils
+package fi.hsl.gtfsrt2hfp.gtfs.utils
 
-import fi.hsl.gtfsrt2hfp.fi.hsl.gtfsrt2hfp.gtfs.model.Calendar
-import fi.hsl.gtfsrt2hfp.fi.hsl.gtfsrt2hfp.gtfs.model.CalendarDate
+import fi.hsl.gtfsrt2hfp.gtfs.model.Calendar
+import fi.hsl.gtfsrt2hfp.gtfs.model.CalendarDate
 
 class ServiceDates(private val calendar: Calendar?, private val calendarDates: List<CalendarDate>?) {
     val dates by lazy {

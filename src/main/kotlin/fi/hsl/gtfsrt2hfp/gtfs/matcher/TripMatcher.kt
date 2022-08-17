@@ -1,6 +1,6 @@
-package fi.hsl.gtfsrt2hfp.fi.hsl.gtfsrt2hfp.gtfs.matcher
+package fi.hsl.gtfsrt2hfp.gtfs.matcher
 
-import fi.hsl.gtfsrt2hfp.fi.hsl.gtfsrt2hfp.gtfs.utils.GtfsIndex
+import fi.hsl.gtfsrt2hfp.gtfs.utils.GtfsIndex
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 

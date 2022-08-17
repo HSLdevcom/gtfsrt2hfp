@@ -1,8 +1,7 @@
 package fi.hsl.gtfsrt2hfp.gtfs.utils
 
-import fi.hsl.gtfsrt2hfp.fi.hsl.gtfsrt2hfp.gtfs.model.Calendar
-import fi.hsl.gtfsrt2hfp.fi.hsl.gtfsrt2hfp.gtfs.model.CalendarDate
-import fi.hsl.gtfsrt2hfp.fi.hsl.gtfsrt2hfp.gtfs.utils.ServiceDates
+import fi.hsl.gtfsrt2hfp.gtfs.model.Calendar
+import fi.hsl.gtfsrt2hfp.gtfs.model.CalendarDate
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 import kotlin.test.assertContentEquals

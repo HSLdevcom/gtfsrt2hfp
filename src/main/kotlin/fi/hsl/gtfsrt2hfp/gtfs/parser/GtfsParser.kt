@@ -1,9 +1,10 @@
 package fi.hsl.gtfsrt2hfp.fi.hsl.gtfsrt2hfp.gtfs.parser
 
-import fi.hsl.gtfsrt2hfp.fi.hsl.gtfsrt2hfp.gtfs.GtfsFeed
+import fi.hsl.gtfsrt2hfp.gtfs.GtfsFeed
 import fi.hsl.gtfsrt2hfp.fi.hsl.gtfsrt2hfp.gtfs.model.*
-import fi.hsl.gtfsrt2hfp.fi.hsl.gtfsrt2hfp.gtfs.utils.parseGtfsDate
-import fi.hsl.gtfsrt2hfp.fi.hsl.gtfsrt2hfp.gtfs.utils.parseGtfsTime
+import fi.hsl.gtfsrt2hfp.gtfs.model.*
+import fi.hsl.gtfsrt2hfp.gtfs.utils.parseGtfsDate
+import fi.hsl.gtfsrt2hfp.gtfs.utils.parseGtfsTime
 import kotlinx.coroutines.*
 import mu.KotlinLogging
 import org.apache.commons.csv.CSVFormat

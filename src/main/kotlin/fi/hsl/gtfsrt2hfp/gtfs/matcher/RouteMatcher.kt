@@ -1,4 +1,4 @@
-package fi.hsl.gtfsrt2hfp.fi.hsl.gtfsrt2hfp.gtfs.matcher
+package fi.hsl.gtfsrt2hfp.gtfs.matcher
 
 interface RouteMatcher {
     /**

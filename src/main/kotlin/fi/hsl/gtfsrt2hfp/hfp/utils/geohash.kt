@@ -1,4 +1,4 @@
-package fi.hsl.gtfsrt2hfp.fi.hsl.gtfsrt2hfp.hfp.utils
+package fi.hsl.gtfsrt2hfp.hfp.utils
 
 import java.math.BigDecimal
 import java.math.RoundingMode

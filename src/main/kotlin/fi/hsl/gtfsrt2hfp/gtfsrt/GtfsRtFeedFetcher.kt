@@ -1,4 +1,4 @@
-package fi.hsl.gtfsrt2hfp.fi.hsl.gtfsrt2hfp.gtfsrt
+package fi.hsl.gtfsrt2hfp.gtfsrt
 
 import com.google.transit.realtime.GtfsRealtime
 import kotlinx.coroutines.Dispatchers

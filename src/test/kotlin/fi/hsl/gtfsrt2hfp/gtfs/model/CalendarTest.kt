@@ -1,6 +1,5 @@
 package fi.hsl.gtfsrt2hfp.gtfs.model
 
-import fi.hsl.gtfsrt2hfp.fi.hsl.gtfsrt2hfp.gtfs.model.Calendar
 import java.time.LocalDate
 import kotlin.test.Test
 import kotlin.test.assertContentEquals

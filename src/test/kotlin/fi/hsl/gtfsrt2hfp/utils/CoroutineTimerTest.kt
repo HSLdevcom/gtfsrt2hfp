@@ -1,6 +1,5 @@
 package fi.hsl.gtfsrt2hfp.utils
 
-import fi.hsl.gtfsrt2hfp.fi.hsl.gtfsrt2hfp.utils.launchTimedTask
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch

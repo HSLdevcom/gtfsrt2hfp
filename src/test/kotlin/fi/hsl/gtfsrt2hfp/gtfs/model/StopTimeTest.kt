@@ -1,6 +1,5 @@
 package fi.hsl.gtfsrt2hfp.gtfs.model
 
-import fi.hsl.gtfsrt2hfp.fi.hsl.gtfsrt2hfp.gtfs.model.StopTime
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 

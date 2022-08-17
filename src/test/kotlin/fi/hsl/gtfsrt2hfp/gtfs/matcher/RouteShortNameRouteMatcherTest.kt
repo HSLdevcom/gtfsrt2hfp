@@ -1,8 +1,6 @@
 package fi.hsl.gtfsrt2hfp.gtfs.matcher
 
-import fi.hsl.gtfsrt2hfp.fi.hsl.gtfsrt2hfp.gtfs.matcher.RouteMatcher
-import fi.hsl.gtfsrt2hfp.fi.hsl.gtfsrt2hfp.gtfs.matcher.RouteShortNameRouteMatcher
-import fi.hsl.gtfsrt2hfp.fi.hsl.gtfsrt2hfp.gtfs.model.Route
+import fi.hsl.gtfsrt2hfp.gtfs.model.Route
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals

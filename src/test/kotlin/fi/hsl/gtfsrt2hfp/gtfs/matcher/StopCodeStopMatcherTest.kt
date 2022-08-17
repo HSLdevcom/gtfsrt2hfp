@@ -1,8 +1,6 @@
 package fi.hsl.gtfsrt2hfp.gtfs.matcher
 
-import fi.hsl.gtfsrt2hfp.fi.hsl.gtfsrt2hfp.gtfs.matcher.StopCodeStopMatcher
-import fi.hsl.gtfsrt2hfp.fi.hsl.gtfsrt2hfp.gtfs.matcher.StopMatcher
-import fi.hsl.gtfsrt2hfp.fi.hsl.gtfsrt2hfp.gtfs.model.Stop
+import fi.hsl.gtfsrt2hfp.gtfs.model.Stop
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals

@@ -1,4 +1,4 @@
-package fi.hsl.gtfsrt2hfp.fi.hsl.gtfsrt2hfp.utils
+package fi.hsl.gtfsrt2hfp.utils
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
