@@ -3,8 +3,24 @@ Application for producing HFP from GTFS-RT vehicle positions by matching third-p
 
 ## Usage
 
-TODO
+```bash
+docker run -it --rm -v application.properties:/application.properties hsldevcom/gtfsrt2hfp:develop -f /application.properties
+```
 
 ### Configuration
 
-TODO
+Create configuration file, which will be mounted to the Docker container (see above):
+
+```
+gtfs.url.a = https://dev.hsl.fi/gtfs/hsl.zip #HSL GTFS feed
+gtfs.url.b = https://minfoapi.matkahuolto.fi/gtfs/067/gtfs.zip #GTFS feed corresponding to the GTFS-RT feed
+
+gtfsRt.url = #GTFS-RT feed URL
+gtfsRt.apiKey = #API key for GTFS-RT feed
+
+mqtt.brokerUri = #MQTT broker URI
+
+routeIds = 7280 #Route IDs from HSL GTFS feed for which HFP is produved
+
+hfp.operatorId = 9999 #Operator ID which will be used in HFP messages
+```
