@@ -1,6 +1,6 @@
 package fi.hsl.gtfsrt2hfp.gtfs
 
-import fi.hsl.gtfsrt2hfp.fi.hsl.gtfsrt2hfp.gtfs.parser.GtfsParser
+import fi.hsl.gtfsrt2hfp.gtfs.parser.GtfsParser
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.withContext
