@@ -4,7 +4,7 @@ Application for producing HFP from GTFS-RT vehicle positions by matching third-p
 ## Usage
 
 ```bash
-docker run -it --rm -v application.properties:/application.properties hsldevcom/gtfsrt2hfp:develop -f /application.properties
+docker run -it --rm -v $(pwd)/application.properties:/application.properties hsldevcom/gtfsrt2hfp:develop -f /application.properties
 ```
 
 ### Configuration
