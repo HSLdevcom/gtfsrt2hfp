@@ -11,8 +11,7 @@ ENV PATH="${JAVA_HOME}/bin:${PATH}"
 
 COPY --from=jre-build /customjre $JAVA_HOME
 
-RUN apk add --no-cache java-cacerts
-RUN ln -s /etc/ssl/certs/java/cacerts ${JAVA_HOME}/lib/security/cacerts
+RUN apk add --no-cache java-cacerts && rm -rf ${JAVA_HOME}/lib/security/cacerts && ln -s /etc/ssl/certs/java/cacerts ${JAVA_HOME}/lib/security/cacerts
 
 ADD build/libs/gtfsrt2hfp.jar /usr/app/gtfsrt2hfp.jar
 ENTRYPOINT ["java", "-XX:InitialRAMPercentage=10.0", "-XX:MaxRAMPercentage=95.0", "-jar", "/usr/app/gtfsrt2hfp.jar"]
