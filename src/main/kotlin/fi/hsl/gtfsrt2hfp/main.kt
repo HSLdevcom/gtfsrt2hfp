@@ -142,7 +142,7 @@ private suspend fun createAndConnectMqttClient(serverUri: String, disconnectedBu
         }
 
         override fun connectionLost(cause: Throwable) {
-            log.warn { "Lost connection to MQTT broker at $serverUri: ${cause.message}" }
+            log.warn { "Lost connection to MQTT broker at $serverUri: $cause" }
         }
 
         override fun messageArrived(topic: String, message: MqttMessage) { }
