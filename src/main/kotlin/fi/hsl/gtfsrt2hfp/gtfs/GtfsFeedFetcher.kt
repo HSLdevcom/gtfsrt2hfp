@@ -18,7 +18,7 @@ private val log = KotlinLogging.logger {}
 
 @ExperimentalTime
 class GtfsFeedFetcher(private val httpClient: HttpClient) {
-    private suspend fun createTempFile(): Path = withContext(Dispatchers.IO) { Files.createTempFile("gtfs", "zip") }
+    private suspend fun createTempFile(): Path = withContext(Dispatchers.IO) { Files.createTempFile("gtfs", ".zip") }
 
     suspend fun fetchGtfsFeed(url: String, filterByRouteIds: Collection<String>? = null): GtfsFeed {
         val request = HttpRequest.newBuilder().uri(URI.create(url)).GET().build()
