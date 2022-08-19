@@ -99,7 +99,13 @@ fun main(vararg args: String) {
             if (gtfsRtToHfpConverter.hasGtfsData()) {
                 val mqttPublishJobs = mutableListOf<Job>()
 
-                val gtfsRtFeed = gtfsRtFeedFetcher.fetchGtfsRtFeed(gtfsRtFeedUrl, gtfsRtHttpHeaders)
+                val gtfsRtFeed = try {
+                    gtfsRtFeedFetcher.fetchGtfsRtFeed(gtfsRtFeedUrl, gtfsRtHttpHeaders)
+                } catch (exception: Exception) {
+                    log.warn { "Failed to fetch GTFS-RT feed from $gtfsRtFeedUrl: $exception" }
+                    return@launchTimedTask
+                }
+
                 val feedEntitiesWithVehiclePosition = gtfsRtFeed.entityList.filter { it.hasVehicle() }
 
                 val vehiclePositionsByVehicleId = feedEntitiesWithVehiclePosition.map { it.vehicle!! }.groupBy { it.vehicle.id!! }
@@ -175,8 +181,13 @@ private suspend fun MqttAsyncClient.sendHfp(hfpTopic: HfpTopic, hfpPayload: HfpP
     val mqttMessage = MqttMessage(hfpPayload.toJson(hfpTopic.eventType).toByteArray(StandardCharsets.UTF_8))
     mqttMessage.qos = 1
 
-    publishAsync(
-        hfpTopic.toString(),
-        mqttMessage
-    )
+    try {
+        publishAsync(
+            hfpTopic.toString(),
+            mqttMessage
+        )
+    } catch (exception: Exception) {
+        //If message publishing fails, just log it instead of throwing exception
+        log.warn { "Failed publishing MQTT message to topic $hfpTopic" }
+    }
 }
