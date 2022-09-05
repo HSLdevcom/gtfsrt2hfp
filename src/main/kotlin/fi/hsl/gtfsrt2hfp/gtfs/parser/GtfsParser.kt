@@ -47,7 +47,7 @@ class GtfsParser {
         val stopId = csvRecord["stop_id"]
 
         if (stopIdFilter == null || stopId in stopIdFilter)  {
-            Stop(stopId, csvRecord["stop_name"], csvRecord["stop_code"])
+            Stop(stopId, csvRecord["stop_name"], csvRecord["stop_code"], csvRecord["stop_lat"].toDoubleOrNull(), csvRecord["stop_lon"].toDoubleOrNull())
         } else {
             null
         }
