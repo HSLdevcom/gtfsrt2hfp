@@ -182,6 +182,7 @@ private suspend fun createAndConnectMqttClient(serverUri: String, disconnectedBu
         isAutomaticReconnect = true
         isCleanSession = false
         maxInflight = maxMessagesInflight
+        keepAliveInterval = 30 //Use shorter keep alive interval to make sure that client does not get disconnected
     })
 
     return mqttAsyncClient
