@@ -65,10 +65,10 @@ fun main(vararg args: String) {
 
     val operatorId = configuration.getString("hfp.operatorId")
 
-    val distanceBasedStopStatus = configuration.containsKey("stopStatus.type") && configuration.getString("stopMatching.type") == "BY_DISTANCE"
-    val maxDistanceFromStop = if (configuration.containsKey("stopStatus.maxDistance")) {
+    val distanceBasedStopStatus = configuration.containsKey("stopStatus.type") && configuration.getString("stopStatus.type") == "BY_DISTANCE"
+    val maxDistanceFromStop = if (configuration.containsKey("stopStatus.maxDistanceFromStop")) {
         //Get value as string to avoid exception thrown by conversion if value is missing
-        configuration.getString("stopMatching.maxDistance").toDoubleOrNull()
+        configuration.getString("stopMatching.maxDistanceFromStop").toDoubleOrNull()
     } else {
         null
     }
