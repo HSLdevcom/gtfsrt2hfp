@@ -124,6 +124,8 @@ fun main(vararg args: String) {
     }
 }
 
+private const val MAX_MQTT_CONNECTION_LOST_COUNT = 5
+
 private suspend fun createAndConnectMqttClient(serverUri: String, disconnectedBufferSize: Int = 50, maxMessagesInflight: Int = 100): MqttAsyncClient {
     val mqttAsyncClient = MqttAsyncClient(serverUri, MqttAsyncClient.generateClientId(), MemoryPersistence())
     mqttAsyncClient.setBufferOpts(DisconnectedBufferOptions().apply {
@@ -133,6 +135,8 @@ private suspend fun createAndConnectMqttClient(serverUri: String, disconnectedBu
         bufferSize = disconnectedBufferSize
     })
     mqttAsyncClient.setCallback(object : MqttCallbackExtended {
+        private var connectionLostCount = 0
+
         private var start by Delegates.notNull<Long>()
         private var messagesSent: Int = 0
 
@@ -149,6 +153,12 @@ private suspend fun createAndConnectMqttClient(serverUri: String, disconnectedBu
 
         override fun connectionLost(cause: Throwable) {
             log.warn { "Lost connection to MQTT broker at $serverUri: $cause" }
+
+            //TODO: find better way to handle unreliable reconnecting
+            if (++connectionLostCount > MAX_MQTT_CONNECTION_LOST_COUNT) {
+                log.error { "Lost connection to MQTT more than $MAX_MQTT_CONNECTION_LOST_COUNT times, exiting application..." }
+                exitProcess(1)
+            }
         }
 
         override fun messageArrived(topic: String, message: MqttMessage) { }
