@@ -68,7 +68,7 @@ fun main(vararg args: String) {
     val distanceBasedStopStatus = configuration.containsKey("stopStatus.type") && configuration.getString("stopStatus.type") == "BY_DISTANCE"
     val maxDistanceFromStop = if (configuration.containsKey("stopStatus.maxDistanceFromStop")) {
         //Get value as string to avoid exception thrown by conversion if value is missing
-        configuration.getString("stopMatching.maxDistanceFromStop").toDoubleOrNull()
+        configuration.getString("stopStatus.maxDistanceFromStop").toDoubleOrNull()
     } else {
         null
     }
