@@ -124,7 +124,7 @@ class GtfsRtToHfpConverter(private val operatorId: String, tripIdCacheDuration: 
                 && nextStopA.location.distanceTo(vehicle.position.getLocation()!!) <= maxDistanceFromStop!!) {
                 nextStopA.id
             } else if (
-                nextStopTimeB?.stopId == vehicle.stopId &&
+                nextStopTimeB?.stopSequence == vehicle.currentStopSequence &&
                 vehicle.currentStatus == GtfsRealtime.VehiclePosition.VehicleStopStatus.STOPPED_AT
             ) {
                 nextStopTimeA?.stopId
