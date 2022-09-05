@@ -1,6 +1,5 @@
 package fi.hsl.gtfsrt2hfp
 
-import fi.hsl.gtfsrt2hfp.fi.hsl.gtfsrt2hfp.GtfsRtToHfpConverter
 import fi.hsl.gtfsrt2hfp.gtfs.GtfsFeedFetcher
 import fi.hsl.gtfsrt2hfp.gtfs.utils.GtfsIndex
 import fi.hsl.gtfsrt2hfp.gtfsrt.GtfsRtFeedFetcher
@@ -66,6 +65,14 @@ fun main(vararg args: String) {
 
     val operatorId = configuration.getString("hfp.operatorId")
 
+    val distanceBasedStopStatus = configuration.containsKey("stopStatus.type") && configuration.getString("stopStatus.type") == "BY_DISTANCE"
+    val maxDistanceFromStop = if (configuration.containsKey("stopStatus.maxDistanceFromStop")) {
+        //Get value as string to avoid exception thrown by conversion if value is missing
+        configuration.getString("stopMatching.maxDistanceFromStop").toDoubleOrNull()
+    } else {
+        null
+    }
+
     runBlocking {
         val httpClient = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL).connectTimeout(Duration.ofSeconds(30)).build()
 
@@ -81,7 +88,7 @@ fun main(vararg args: String) {
 
         val mqttAsyncClient = createAndConnectMqttClient(mqttBrokerUri)
 
-        val gtfsRtToHfpConverter = GtfsRtToHfpConverter(operatorId)
+        val gtfsRtToHfpConverter = GtfsRtToHfpConverter(operatorId, distanceBasedStopStatus = distanceBasedStopStatus, maxDistanceFromStop = maxDistanceFromStop)
 
         log.info { "Starting GTFS-RT2HFP application" }
         //Update GTFS data every 12 hours
