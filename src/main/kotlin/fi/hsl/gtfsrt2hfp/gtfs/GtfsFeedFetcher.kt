@@ -12,6 +12,7 @@ import java.net.http.HttpRequest
 import java.net.http.HttpResponse.BodyHandlers
 import java.nio.file.Files
 import java.nio.file.Path
+import java.time.Duration
 import kotlin.time.ExperimentalTime
 
 private val log = KotlinLogging.logger {}
@@ -21,7 +22,7 @@ class GtfsFeedFetcher(private val httpClient: HttpClient) {
     private suspend fun createTempFile(): Path = withContext(Dispatchers.IO) { Files.createTempFile("gtfs", ".zip") }
 
     suspend fun fetchGtfsFeed(url: String, filterByRouteIds: Collection<String>? = null): GtfsFeed {
-        val request = HttpRequest.newBuilder().uri(URI.create(url)).GET().build()
+        val request = HttpRequest.newBuilder().uri(URI.create(url)).timeout(Duration.ofMinutes(1)).GET().build()
         val outputFile = createTempFile()
 
         log.info { "Downloading GTFS from $url to $outputFile" }
