@@ -9,10 +9,11 @@ import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse.BodyHandlers
+import java.time.Duration
 
 class GtfsRtFeedFetcher(private val httpClient: HttpClient) {
     suspend fun fetchGtfsRtFeed(url: String, headers: Map<String, String> = emptyMap()): GtfsRealtime.FeedMessage {
-        val httpRequestBuilder = HttpRequest.newBuilder().uri(URI.create(url)).GET()
+        val httpRequestBuilder = HttpRequest.newBuilder().uri(URI.create(url)).timeout(Duration.ofSeconds(2)).GET()
 
         for ((key, value) in headers) {
             httpRequestBuilder.setHeader(key, value)
