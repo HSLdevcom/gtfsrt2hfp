@@ -93,13 +93,17 @@ fun main(vararg args: String) {
         log.info { "Starting GTFS-RT2HFP application" }
         //Update GTFS data every 12 hours
         launchTimedTask(12.hours) {
-            val gtfsFeedA = async { gtfsFeedFetcher.fetchGtfsFeed(gtfsFeedUrlA, routeIds) }
-            val gtfsFeedB = async { gtfsFeedFetcher.fetchGtfsFeed(gtfsFeedUrlB) }
+            try {
+                val gtfsFeedA = async { gtfsFeedFetcher.fetchGtfsFeed(gtfsFeedUrlA, routeIds) }
+                val gtfsFeedB = async { gtfsFeedFetcher.fetchGtfsFeed(gtfsFeedUrlB) }
 
-            val gtfsIndexA = GtfsIndex(gtfsFeedA.await())
-            val gtfsIndexB = GtfsIndex(gtfsFeedB.await())
+                val gtfsIndexA = GtfsIndex(gtfsFeedA.await())
+                val gtfsIndexB = GtfsIndex(gtfsFeedB.await())
 
-            gtfsRtToHfpConverter.updateGtfsData(gtfsIndexA, gtfsIndexB)
+                gtfsRtToHfpConverter.updateGtfsData(gtfsIndexA, gtfsIndexB)
+            } catch (exception: Exception) {
+                log.warn { "Failed to update GTFS data: $exception" }
+            }
         }
 
         launchTimedTask(1.seconds) {
