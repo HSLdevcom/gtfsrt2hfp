@@ -13,6 +13,8 @@ import fi.hsl.gtfsrt2hfp.hfp.utils.formatHfpTime
 import fi.hsl.gtfsrt2hfp.hfp.utils.getGeohash
 import fi.hsl.gtfsrt2hfp.utils.getLocation
 import kotlinx.coroutines.future.await
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import mu.KotlinLogging
 import java.time.Duration
 import java.time.Instant
@@ -31,6 +33,8 @@ class GtfsRtToHfpConverter(private val operatorId: String, tripIdCacheDuration: 
         private val TST_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSX")
     }
 
+    private val mutex = Mutex()
+
     private var gtfsIndexA: GtfsIndex? = null
     private var gtfsIndexB: GtfsIndex? = null
 
@@ -47,7 +51,7 @@ class GtfsRtToHfpConverter(private val operatorId: String, tripIdCacheDuration: 
 
     fun hasGtfsData(): Boolean = gtfsIndexA != null && gtfsIndexB != null
 
-    fun updateGtfsData(gtfsIndexA: GtfsIndex, gtfsIndexB: GtfsIndex) {
+    suspend fun updateGtfsData(gtfsIndexA: GtfsIndex, gtfsIndexB: GtfsIndex) = mutex.withLock {
         log.info { "Updating GTFS data" }
 
         this.gtfsIndexA = gtfsIndexA
@@ -61,7 +65,7 @@ class GtfsRtToHfpConverter(private val operatorId: String, tripIdCacheDuration: 
         tripIdCache.synchronous().invalidateAll()
     }
 
-    suspend fun createHfpForVehiclePosition(vehicle: GtfsRealtime.VehiclePosition): Pair<HfpTopic, HfpPayload>? {
+    suspend fun createHfpForVehiclePosition(vehicle: GtfsRealtime.VehiclePosition): Pair<HfpTopic, HfpPayload>? = mutex.withLock {
         if (!hasGtfsData()) {
             throw IllegalStateException("No GTFS data available")
         }
