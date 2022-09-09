@@ -13,11 +13,14 @@ import fi.hsl.gtfsrt2hfp.hfp.utils.formatHfpTime
 import fi.hsl.gtfsrt2hfp.hfp.utils.getGeohash
 import fi.hsl.gtfsrt2hfp.utils.getLocation
 import kotlinx.coroutines.future.await
+import mu.KotlinLogging
 import java.time.Duration
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import kotlin.math.roundToInt
+
+private val log = KotlinLogging.logger {}
 
 /**
  * @param operatorId Operator ID which is used in the HFP message
@@ -45,6 +48,8 @@ class GtfsRtToHfpConverter(private val operatorId: String, tripIdCacheDuration: 
     fun hasGtfsData(): Boolean = gtfsIndexA != null && gtfsIndexB != null
 
     fun updateGtfsData(gtfsIndexA: GtfsIndex, gtfsIndexB: GtfsIndex) {
+        log.info { "Updating GTFS data" }
+
         this.gtfsIndexA = gtfsIndexA
         this.gtfsIndexB = gtfsIndexB
 
