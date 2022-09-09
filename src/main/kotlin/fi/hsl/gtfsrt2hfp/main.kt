@@ -102,7 +102,8 @@ fun main(vararg args: String) {
 
                 gtfsRtToHfpConverter.updateGtfsData(gtfsIndexA, gtfsIndexB)
             } catch (exception: Exception) {
-                log.warn { "Failed to update GTFS data: $exception" }
+                log.error { "Failed to update GTFS data: $exception, exiting application..." }
+                exitProcess(1)
             }
         }
 
