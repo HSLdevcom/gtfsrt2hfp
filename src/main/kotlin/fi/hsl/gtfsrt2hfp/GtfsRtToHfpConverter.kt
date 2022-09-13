@@ -1,6 +1,7 @@
 package fi.hsl.gtfsrt2hfp
 
 import com.github.benmanes.caffeine.cache.AsyncLoadingCache
+import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.google.transit.realtime.GtfsRealtime
 import fi.hsl.gtfsrt2hfp.gtfs.matcher.*
@@ -49,6 +50,10 @@ class GtfsRtToHfpConverter(private val operatorId: String, tripIdCacheDuration: 
         .expireAfterAccess(tripIdCacheDuration)
         .buildAsync { (tripId, startDate) -> tripMatcher!!.matchTrip(tripId, startDate) }
 
+    private val latestTimestamp: Cache<Pair<String, String>, Long> = Caffeine.newBuilder()
+        .expireAfterWrite(Duration.ofMinutes(1)) //TODO: this should be configurable
+        .build()
+
     fun hasGtfsData(): Boolean = gtfsIndexA != null && gtfsIndexB != null
 
     suspend fun updateGtfsData(gtfsIndexA: GtfsIndex, gtfsIndexB: GtfsIndex) = mutex.withLock {
@@ -68,6 +73,18 @@ class GtfsRtToHfpConverter(private val operatorId: String, tripIdCacheDuration: 
     suspend fun createHfpForVehiclePosition(vehicle: GtfsRealtime.VehiclePosition): Pair<HfpTopic, HfpPayload>? = mutex.withLock {
         if (!hasGtfsData()) {
             throw IllegalStateException("No GTFS data available")
+        }
+
+        val operatorId = operatorId.padStart(4, '0')
+        //TODO: find alternative ways to create HFP-compatible vehicle IDs
+        val vehicleId = vehicle.vehicle.id.replace(NO_DIGIT_REGEX, "").takeLast(5).padStart(5, '0')
+
+        val uniqueVehicleId = operatorId to vehicleId
+
+        val latestTimestampForVehicle = latestTimestamp.getIfPresent(uniqueVehicleId)
+        if (latestTimestampForVehicle != null && latestTimestampForVehicle >= vehicle.timestamp) {
+            log.debug { "Vehicle timestamp (${vehicle.timestamp}) was not newer than previously published (${latestTimestampForVehicle}), ignoring vehicle position..." }
+            return null
         }
 
         val tripId = tripIdCache.get(vehicle.trip.tripId to vehicle.trip.startDate).await()
@@ -93,10 +110,6 @@ class GtfsRtToHfpConverter(private val operatorId: String, tripIdCacheDuration: 
             val firstStopTime = stopTimesA.first()
 
             val directionId = (trip.directionId?.plus(1))
-
-            val operatorId = operatorId.padStart(4, '0')
-            //TODO: find alternative ways to create HFP-compatible vehicle IDs
-            val vehicleId = vehicle.vehicle.id.replace(NO_DIGIT_REGEX, "").takeLast(5).padStart(5, '0')
 
             val timestamp = Instant.ofEpochSecond(vehicle.timestamp)
 
@@ -165,6 +178,8 @@ class GtfsRtToHfpConverter(private val operatorId: String, tripIdCacheDuration: 
                 route.id,
                 0
             )
+
+            latestTimestamp.put(uniqueVehicleId, vehicle.timestamp)
 
             return hfpTopic to hfpPayload
         }
