@@ -64,7 +64,7 @@ class GtfsRtToHfpConverter(private val operatorId: String, tripIdCacheDuration: 
 
         routeMatcher = RouteShortNameRouteMatcher(gtfsIndexB, gtfsIndexA)
         tripMatcher = TripMatcher(gtfsIndexB, gtfsIndexA, routeMatcher!!)
-        stopMatcher = StopCodeStopMatcher(gtfsIndexB, gtfsIndexA)
+        stopMatcher = DistanceStopMatcher(gtfsIndexB, gtfsIndexA, 50.0) //TODO: make this configurable
 
         //Clear cache when GTFS data is updated, because trip IDs might have changed
         tripIdCache.synchronous().invalidateAll()
