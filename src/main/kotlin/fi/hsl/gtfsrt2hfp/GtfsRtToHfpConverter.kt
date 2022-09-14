@@ -6,7 +6,7 @@ import com.github.benmanes.caffeine.cache.Caffeine
 import com.google.transit.realtime.GtfsRealtime
 import fi.hsl.gtfsrt2hfp.gtfs.matcher.*
 import fi.hsl.gtfsrt2hfp.gtfs.utils.GtfsIndex
-import fi.hsl.gtfsrt2hfp.gtfs.utils.parseGtfsDate
+import fi.hsl.gtfsrt2hfp.gtfs.utils.location
 import fi.hsl.gtfsrt2hfp.hfp.model.HfpPayload
 import fi.hsl.gtfsrt2hfp.hfp.model.HfpTopic
 import fi.hsl.gtfsrt2hfp.hfp.utils.GeohashCalculator
@@ -17,6 +17,7 @@ import kotlinx.coroutines.future.await
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import mu.KotlinLogging
+import xyz.malkki.gtfs.utils.GtfsDateFormat
 import java.time.Duration
 import java.time.Instant
 import java.time.ZoneId
@@ -113,7 +114,7 @@ class GtfsRtToHfpConverter(private val operatorId: String, tripIdCacheDuration: 
 
             val timestamp = Instant.ofEpochSecond(vehicle.timestamp)
 
-            val startTime = formatHfpTime(firstStopTime!!.departureTime)
+            val startTime = formatHfpTime(firstStopTime!!.departureTime!!)
 
             val firstPossibleNextStop = stopTimesB.find { stopTime -> stopTime.stopSequence == vehicle.currentStopSequence }
             //Next stop from GTFS feed B that also has a corresponding stop present in GTFS feed A
@@ -132,7 +133,7 @@ class GtfsRtToHfpConverter(private val operatorId: String, tripIdCacheDuration: 
                 vehicleId,
                 trip.routeId,
                 directionId.toString(),
-                trip.headsign,
+                trip.tripHeadsign ?: "",
                 startTime,
                 nextStopTimeA?.stopId ?: "",
                 geohashCalculator.getGeohashLevel(operatorId, vehicleId, vehicle.position.latitude.toDouble(), vehicle.position.longitude.toDouble(), nextStopTimeA?.stopId, trip.routeId, startTime, directionId.toString()),
@@ -143,8 +144,8 @@ class GtfsRtToHfpConverter(private val operatorId: String, tripIdCacheDuration: 
                 && nextStopA != null
                 && nextStopA.location != null
                 && vehicle.position.getLocation() != null
-                && nextStopA.location.distanceTo(vehicle.position.getLocation()!!) <= maxDistanceFromStop!!) {
-                nextStopA.id
+                && nextStopA.location!!.distanceTo(vehicle.position.getLocation()!!) <= maxDistanceFromStop!!) {
+                nextStopA.stopId
             } else if (
                 nextStopTimeB?.stopSequence == vehicle.currentStopSequence &&
                 vehicle.currentStatus == GtfsRealtime.VehiclePosition.VehicleStopStatus.STOPPED_AT
@@ -155,7 +156,7 @@ class GtfsRtToHfpConverter(private val operatorId: String, tripIdCacheDuration: 
             }
 
             val hfpPayload = HfpPayload(
-                route.shortName,
+                route.routeShortName!!,
                 directionId.toString(),
                 operatorId.toInt(),
                 vehicleId.toInt(),
@@ -169,13 +170,13 @@ class GtfsRtToHfpConverter(private val operatorId: String, tripIdCacheDuration: 
                 null,
                 null,
                 null,
-                parseGtfsDate(vehicle.trip.startDate).format(DateTimeFormatter.ISO_LOCAL_DATE),
+                GtfsDateFormat.parseFromString(vehicle.trip.startDate).format(DateTimeFormatter.ISO_LOCAL_DATE),
                 null,
                 null,
                 startTime,
                 "GPS",
                 currentStop,
-                route.id,
+                route.routeId,
                 0
             )
 

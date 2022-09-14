@@ -1,7 +1,7 @@
 package fi.hsl.gtfsrt2hfp.gtfs.matcher
 
-import fi.hsl.gtfsrt2hfp.gtfs.model.Stop
 import fi.hsl.gtfsrt2hfp.gtfs.utils.GtfsIndex
+import xyz.malkki.gtfs.model.Stop
 
 /**
  * Matches stops from GTFS feed A to GTFS feed B by comparing their stop codes (stop_code column in stops.txt)
@@ -11,16 +11,16 @@ class StopCodeStopMatcher(private val stopsByIdA: Map<String, Stop>, private val
     constructor(gtfsIndexA: GtfsIndex, gtfsIndexB: GtfsIndex) : this(gtfsIndexA.stopsById, gtfsIndexB.stopsById)
 
     private val matchedStops by lazy {
-        val aByCode = stopsByIdA.values.filter { it.code.isNotBlank() }.groupBy { it.code.trim() }
-        val bByCode = stopsByIdB.values.filter { it.code.isNotBlank() }.groupBy { it.code.trim() }
+        val aByCode = stopsByIdA.values.filter { it.stopCode!!.isNotBlank() }.groupBy { it.stopCode!!.trim() }
+        val bByCode = stopsByIdB.values.filter { it.stopCode!!.isNotBlank() }.groupBy { it.stopCode!!.trim() }
 
         val intersection = HashSet(aByCode.keys)
         intersection.retainAll(bByCode.keys)
 
         val output = mutableMapOf<String, List<String>>()
         intersection.forEach { stopCode ->
-            val stopsB = bByCode[stopCode]?.map { stop -> stop.id } ?: emptyList()
-            aByCode[stopCode]?.forEach { stop -> output[stop.id] = stopsB }
+            val stopsB = bByCode[stopCode]?.map { stop -> stop.stopId } ?: emptyList()
+            aByCode[stopCode]?.forEach { stop -> output[stop.stopId] = stopsB }
         }
 
         return@lazy output.toMap()
