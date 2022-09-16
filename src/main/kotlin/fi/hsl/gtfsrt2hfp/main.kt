@@ -55,14 +55,14 @@ fun main(vararg args: String) {
     }
 
     val gtfsFeedUrlA = configuration.getString("gtfs.url.a")!!
-    val gtfsFeedUrlB = configuration.getList(String::class.java, "gtfs.url.b")!!.toList()
+    val gtfsFeedUrlB = configuration.getString("gtfs.url.b")!!.split(",")
 
     val gtfsRtFeedUrl = configuration.getString("gtfsRt.url")!!
     val gtfsRtFeedApiKey = configuration.getString("gtfsRt.apiKey")
 
     val mqttBrokerUri = configuration.getString("mqtt.brokerUri")!!
 
-    val routeIds = configuration.getList(String::class.java, "routeIds")!!.toSet()
+    val routeIds = configuration.getString("routeIds")!!.split(",")
 
     val operatorId = configuration.getString("hfp.operatorId")
 
