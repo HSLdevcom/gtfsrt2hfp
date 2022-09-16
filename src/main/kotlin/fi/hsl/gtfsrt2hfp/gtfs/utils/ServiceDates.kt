@@ -1,7 +1,7 @@
 package fi.hsl.gtfsrt2hfp.gtfs.utils
 
-import fi.hsl.gtfsrt2hfp.gtfs.model.Calendar
-import fi.hsl.gtfsrt2hfp.gtfs.model.CalendarDate
+import xyz.malkki.gtfs.model.Calendar
+import xyz.malkki.gtfs.model.CalendarDate
 
 class ServiceDates(private val calendar: Calendar?, private val calendarDates: List<CalendarDate>?) {
     val dates by lazy {
@@ -9,9 +9,9 @@ class ServiceDates(private val calendar: Calendar?, private val calendarDates: L
 
         if (calendarDates != null) {
             for (calendarDate in calendarDates) {
-                if (calendarDate.exceptionType == 2) {
+                if (calendarDate.exceptionType == CalendarDate.EXCEPTION_TYPE_REMOVED) {
                     dates.remove(calendarDate.date)
-                } else if (calendarDate.exceptionType == 1) {
+                } else if (calendarDate.exceptionType == CalendarDate.EXCEPTION_TYPE_ADDED) {
                     dates.add(calendarDate.date)
                 }
             }

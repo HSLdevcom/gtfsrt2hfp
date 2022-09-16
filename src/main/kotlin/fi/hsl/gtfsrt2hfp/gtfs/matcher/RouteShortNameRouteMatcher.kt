@@ -1,7 +1,7 @@
 package fi.hsl.gtfsrt2hfp.gtfs.matcher
 
-import fi.hsl.gtfsrt2hfp.gtfs.model.Route
 import fi.hsl.gtfsrt2hfp.gtfs.utils.GtfsIndex
+import xyz.malkki.gtfs.model.Route
 
 /**
  *
@@ -20,10 +20,10 @@ class RouteShortNameRouteMatcher(private val routesByIdA: Map<String, Route>, pr
 
         return routesByIdB.values.filter { routeB ->
             if (compareDigitsOnly) {
-                routeA.shortName.replace(NO_DIGIT_REGEX, "") == routeB.shortName.replace(NO_DIGIT_REGEX, "")
+                routeA.routeShortName!!.replace(NO_DIGIT_REGEX, "") == routeB.routeShortName!!.replace(NO_DIGIT_REGEX, "")
             } else {
-                routeA.shortName == routeB.shortName
+                routeA.routeShortName!! == routeB.routeShortName!!
             }
-        }.map { it.id }
+        }.map { it.routeId }
     }
 }

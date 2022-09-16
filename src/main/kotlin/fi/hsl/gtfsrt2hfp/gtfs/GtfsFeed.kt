@@ -1,6 +1,7 @@
 package fi.hsl.gtfsrt2hfp.gtfs
 
-import fi.hsl.gtfsrt2hfp.gtfs.model.*
+import xyz.malkki.gtfs.model.*
+
 
 data class GtfsFeed(
     val stops: List<Stop>,

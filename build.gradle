@@ -9,6 +9,14 @@ version = '1.0.0'
 
 repositories {
     mavenCentral()
+    maven {
+        url "https://maven.pkg.github.com/mjaakko/gtfs-library"
+        credentials {
+            username = project.findProperty("github.user") ?: System.getenv("GITHUB_ACTOR")
+            password = project.findProperty("github.token") ?: System.getenv("GITHUB_TOKEN")
+        }
+    }
+
 }
 
 dependencies {
@@ -32,7 +40,7 @@ dependencies {
     implementation 'commons-beanutils:commons-beanutils:1.9.4'
     implementation 'org.apache.commons:commons-configuration2:2.8.0'
 
-    implementation "org.apache.commons:commons-csv:1.9.0"
+    implementation 'xyz.malkki:gtfs-library:0.1.2'
     implementation group: 'org.mobilitydata', name: 'gtfs-realtime-bindings', version: '0.0.8'
 }
 
