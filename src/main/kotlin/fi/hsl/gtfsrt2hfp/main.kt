@@ -1,6 +1,7 @@
 package fi.hsl.gtfsrt2hfp
 
 import fi.hsl.gtfsrt2hfp.gtfs.GtfsFeedFetcher
+import fi.hsl.gtfsrt2hfp.gtfs.merger.mergeWith
 import fi.hsl.gtfsrt2hfp.gtfs.utils.GtfsIndex
 import fi.hsl.gtfsrt2hfp.gtfsrt.GtfsRtFeedFetcher
 import fi.hsl.gtfsrt2hfp.hfp.model.HfpPayload
@@ -54,7 +55,7 @@ fun main(vararg args: String) {
     }
 
     val gtfsFeedUrlA = configuration.getString("gtfs.url.a")!!
-    val gtfsFeedUrlB = configuration.getString("gtfs.url.b")!!
+    val gtfsFeedUrlB = configuration.getList(String::class.java, "gtfs.url.b")!!.toList()
 
     val gtfsRtFeedUrl = configuration.getString("gtfsRt.url")!!
     val gtfsRtFeedApiKey = configuration.getString("gtfsRt.apiKey")
@@ -95,10 +96,12 @@ fun main(vararg args: String) {
         launchTimedTask(12.hours) {
             try {
                 val gtfsFeedA = async { gtfsFeedFetcher.fetchGtfsFeed(gtfsFeedUrlA, routeIds) }
-                val gtfsFeedB = async { gtfsFeedFetcher.fetchGtfsFeed(gtfsFeedUrlB) }
+
+                val gtfsFeedsB = gtfsFeedUrlB.map { async { gtfsFeedFetcher.fetchGtfsFeed(it) } }.map { it.await() }
+                val gtfsFeedB = gtfsFeedsB.reduce { a, b -> a.mergeWith(b) }
 
                 val gtfsIndexA = GtfsIndex(gtfsFeedA.await())
-                val gtfsIndexB = GtfsIndex(gtfsFeedB.await())
+                val gtfsIndexB = GtfsIndex(gtfsFeedB)
 
                 gtfsRtToHfpConverter.updateGtfsData(gtfsIndexA, gtfsIndexB)
             } catch (exception: Exception) {
