@@ -22,25 +22,25 @@ class GtfsParser {
      * @param path Path to the GTFS .zip file
      * @param filterByRouteIds Only include data that is relevant to routes with these IDs. If null, no filtering is done
      */
-    suspend fun parseGtfsFeed(file: Path, filterByRouteIds: Collection<String>? = null): GtfsFeed = coroutineScope {
+    suspend fun parseGtfsFeed(file: Path, filterByRouteIds: Collection<String>? = null): GtfsFeed = withContext(Dispatchers.IO) {
         log.info { "Parsing GTFS from ${file.toAbsolutePath()}" }
 
         val (gtfsFeed, duration) = measureTimedValue {
             GtfsFeedParser(file).use { parser ->
-                val routes = async(Dispatchers.IO) { parser.parseRoutes().filter(getFilterPredicate(filterByRouteIds) { it.routeId }).toList() }
-                val trips = async(Dispatchers.IO) { parser.parseTrips().filter(getFilterPredicate(filterByRouteIds) { it.routeId }).toList()  }
+                val routes = async { parser.parseRoutes().filter(getFilterPredicate(filterByRouteIds) { it.routeId }).toList() }
+                val trips = async { parser.parseTrips().filter(getFilterPredicate(filterByRouteIds) { it.routeId }).toList()  }
 
                 val serviceIdFilter = if (filterByRouteIds == null) { null } else { trips.await().map { it.serviceId }.toSet() }
                 val tripIdFilter = if (filterByRouteIds == null) { null } else { trips.await().map { it.tripId }.toSet() }
 
-                val stopTimes = async(Dispatchers.IO) { parser.parseStopTimes().filter(getFilterPredicate(tripIdFilter) { it.tripId }).toList() }
+                val stopTimes = async { parser.parseStopTimes().filter(getFilterPredicate(tripIdFilter) { it.tripId }).toList() }
 
-                val calendars = async(Dispatchers.IO) { parser.parseCalendars().filter(getFilterPredicate(serviceIdFilter) { it.serviceId }).toList() }
-                val calendarDates = async(Dispatchers.IO) { parser.parseCalendarDates().filter(getFilterPredicate(serviceIdFilter) { it.serviceId }).toList() }
+                val calendars = async { parser.parseCalendars().filter(getFilterPredicate(serviceIdFilter) { it.serviceId }).toList() }
+                val calendarDates = async { parser.parseCalendarDates().filter(getFilterPredicate(serviceIdFilter) { it.serviceId }).toList() }
 
                 val stopIdFilter = if (filterByRouteIds == null) { null } else { stopTimes.await().map { it.stopId }.toSet() }
 
-                val stops = async(Dispatchers.IO) { parser.parseStops().filter(getFilterPredicate(stopIdFilter) { it.stopId }).toList() }
+                val stops = async { parser.parseStops().filter(getFilterPredicate(stopIdFilter) { it.stopId }).toList() }
 
                 GtfsFeed(stops.await(), routes.await(), trips.await(), stopTimes.await(), calendars.await(), calendarDates.await())
             }
@@ -48,6 +48,6 @@ class GtfsParser {
 
         log.info { "GTFS parsed in ${duration.inWholeMilliseconds}ms" }
 
-        return@coroutineScope gtfsFeed
+        return@withContext gtfsFeed
     }
 }
