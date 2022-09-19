@@ -2,6 +2,7 @@ package fi.hsl.gtfsrt2hfp.gtfsrt
 
 import com.google.transit.realtime.GtfsRealtime
 import fi.hsl.gtfsrt2hfp.utils.executeSuspending
+import fi.hsl.gtfsrt2hfp.utils.readString
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.Headers.Companion.toHeaders
@@ -21,7 +22,7 @@ class GtfsRtFeedFetcher(private val httpClient: OkHttpClient) {
                 }
             }
         } else {
-            throw IOException("HTTP request to $url failed, status ${httpResponse.code}")
+            throw IOException("HTTP request to $url failed (status ${httpResponse.code}), response: ${httpResponse.body?.charStream()?.readString(200)}")
         }
     }
 }
