@@ -1,45 +1,49 @@
 package fi.hsl.gtfsrt2hfp.gtfs
 
 import fi.hsl.gtfsrt2hfp.gtfs.parser.GtfsParser
+import fi.hsl.gtfsrt2hfp.utils.executeSuspending
+import fi.hsl.gtfsrt2hfp.utils.readString
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.future.await
 import kotlinx.coroutines.withContext
 import mu.KotlinLogging
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import java.io.BufferedOutputStream
 import java.io.IOException
-import java.net.URI
-import java.net.http.HttpClient
-import java.net.http.HttpRequest
-import java.net.http.HttpResponse.BodyHandlers
 import java.nio.file.Files
 import java.nio.file.Path
-import java.time.Duration
+import kotlin.io.path.outputStream
 import kotlin.time.ExperimentalTime
 
 private val log = KotlinLogging.logger {}
 
 @ExperimentalTime
-class GtfsFeedFetcher(private val httpClient: HttpClient) {
+class GtfsFeedFetcher(private val httpClient: OkHttpClient) {
     private suspend fun createTempFile(): Path = withContext(Dispatchers.IO) { Files.createTempFile("gtfs", ".zip") }
 
     suspend fun fetchGtfsFeed(url: String, filterByRouteIds: Collection<String>? = null): GtfsFeed {
-        val request = HttpRequest.newBuilder().uri(URI.create(url)).timeout(Duration.ofMinutes(1)).GET().build()
+        val request = Request.Builder().url(url).build()
         val outputFile = createTempFile()
 
         log.info { "Downloading GTFS from $url to $outputFile" }
 
-        val httpResponse = httpClient.sendAsync(request, BodyHandlers.ofFile(outputFile)).await()
-        if (httpResponse.statusCode() == 200) {
-            val file = httpResponse.body()
-
+        val httpResponse = httpClient.newCall(request).executeSuspending()
+        if (httpResponse.isSuccessful) {
             try {
-                return GtfsParser().parseGtfsFeed(file, filterByRouteIds)
+                withContext(Dispatchers.IO) {
+                    BufferedOutputStream(outputFile.outputStream()).use {
+                        httpResponse.body!!.byteStream().transferTo(it)
+                    }
+                }
+
+                return GtfsParser().parseGtfsFeed(outputFile, filterByRouteIds)
             } finally {
                 withContext(Dispatchers.IO) {
-                    Files.deleteIfExists(file)
+                    Files.deleteIfExists(outputFile)
                 }
             }
         } else {
-            throw IOException("HTTP request to $url failed, status ${httpResponse.statusCode()}")
+            throw IOException("HTTP request to $url failed (status ${httpResponse.code}), response: ${httpResponse.body?.charStream()?.readString(200)}")
         }
     }
 }

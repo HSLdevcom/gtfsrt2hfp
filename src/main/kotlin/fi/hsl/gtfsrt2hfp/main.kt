@@ -15,13 +15,13 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
+import okhttp3.OkHttpClient
 import org.apache.commons.cli.DefaultParser
 import org.apache.commons.cli.HelpFormatter
 import org.apache.commons.cli.Options
 import org.eclipse.paho.client.mqttv3.*
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence
 import java.math.RoundingMode
-import java.net.http.HttpClient
 import java.nio.charset.StandardCharsets
 import java.nio.file.Paths
 import java.time.Duration
@@ -75,7 +75,7 @@ fun main(vararg args: String) {
     }
 
     runBlocking {
-        val httpClient = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL).connectTimeout(Duration.ofSeconds(30)).build()
+        val httpClient = OkHttpClient.Builder().callTimeout(Duration.ofMinutes(2)).followRedirects(true).build()
 
         val gtfsFeedFetcher = GtfsFeedFetcher(httpClient)
 
