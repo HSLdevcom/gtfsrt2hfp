@@ -1,33 +1,27 @@
 package fi.hsl.gtfsrt2hfp.gtfsrt
 
 import com.google.transit.realtime.GtfsRealtime
+import fi.hsl.gtfsrt2hfp.utils.executeSuspending
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.future.await
 import kotlinx.coroutines.withContext
+import okhttp3.Headers.Companion.toHeaders
+import okhttp3.OkHttpClient
+import okhttp3.Request
 import java.io.IOException
-import java.net.URI
-import java.net.http.HttpClient
-import java.net.http.HttpRequest
-import java.net.http.HttpResponse.BodyHandlers
-import java.time.Duration
 
-class GtfsRtFeedFetcher(private val httpClient: HttpClient) {
+class GtfsRtFeedFetcher(private val httpClient: OkHttpClient) {
     suspend fun fetchGtfsRtFeed(url: String, headers: Map<String, String> = emptyMap()): GtfsRealtime.FeedMessage {
-        val httpRequestBuilder = HttpRequest.newBuilder().uri(URI.create(url)).timeout(Duration.ofSeconds(2)).GET()
+        val httpRequest = Request.Builder().url(url).headers(headers.toHeaders()).build()
 
-        for ((key, value) in headers) {
-            httpRequestBuilder.setHeader(key, value)
-        }
-
-        val httpResponse = httpClient.sendAsync(httpRequestBuilder.build(), BodyHandlers.ofInputStream()).await()
-        if (httpResponse.statusCode() == 200) {
+        val httpResponse = httpClient.newCall(httpRequest).executeSuspending()
+        if (httpResponse.isSuccessful) {
             return withContext(Dispatchers.IO) {
-                httpResponse.body().use {
-                    GtfsRealtime.FeedMessage.parseFrom(it)
+                httpResponse.body!!.use {
+                    GtfsRealtime.FeedMessage.parseFrom(it.byteStream())
                 }
             }
         } else {
-            throw IOException("HTTP request to $url failed, status ${httpResponse.statusCode()}")
+            throw IOException("HTTP request to $url failed, status ${httpResponse.code}")
         }
     }
 }
