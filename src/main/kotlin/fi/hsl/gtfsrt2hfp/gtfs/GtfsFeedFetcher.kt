@@ -2,14 +2,13 @@ package fi.hsl.gtfsrt2hfp.gtfs
 
 import fi.hsl.gtfsrt2hfp.gtfs.parser.GtfsParser
 import fi.hsl.gtfsrt2hfp.utils.executeSuspending
-import fi.hsl.gtfsrt2hfp.utils.readString
+import fi.hsl.gtfsrt2hfp.utils.handleIfSuccessful
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import mu.KotlinLogging
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.BufferedOutputStream
-import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.outputStream
@@ -27,12 +26,11 @@ class GtfsFeedFetcher(private val httpClient: OkHttpClient) {
 
         log.info { "Downloading GTFS from $url to $outputFile" }
 
-        val httpResponse = httpClient.newCall(request).executeSuspending()
-        if (httpResponse.isSuccessful) {
+        httpClient.newCall(request).executeSuspending().handleIfSuccessful { response ->
             try {
                 withContext(Dispatchers.IO) {
                     BufferedOutputStream(outputFile.outputStream()).use {
-                        httpResponse.body!!.byteStream().transferTo(it)
+                        response.body!!.byteStream().transferTo(it)
                     }
                 }
 
@@ -42,8 +40,6 @@ class GtfsFeedFetcher(private val httpClient: OkHttpClient) {
                     Files.deleteIfExists(outputFile)
                 }
             }
-        } else {
-            throw IOException("HTTP request to $url failed (status ${httpResponse.code}), response: ${httpResponse.body?.charStream()?.readString(200)}")
         }
     }
 }

@@ -21,3 +21,17 @@ suspend fun Call.executeSuspending(): Response = suspendCancellableCoroutine { c
 
     cancellableContinuation.invokeOnCancellation { if (!isCanceled()) { cancel() } }
 }
+
+inline fun <T> Response.handleIfSuccessful(handler: (Response) -> T): T {
+    if (isSuccessful) {
+        return handler(this)
+    } else {
+        val responseText = try {
+            body?.charStream()?.readString(200)
+        } catch (e: Exception) {
+            null
+        }
+
+        throw IOException("HTTP request to ${request.url} failed (status $code - ${message}), response: $responseText")
+    }
+}
