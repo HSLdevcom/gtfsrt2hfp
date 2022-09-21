@@ -4,9 +4,7 @@ import com.github.benmanes.caffeine.cache.AsyncLoadingCache
 import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.google.transit.realtime.GtfsRealtime
-import fi.hsl.gtfsrt2hfp.gtfs.matcher.RouteMatcher
-import fi.hsl.gtfsrt2hfp.gtfs.matcher.RouteShortNameRouteMatcher
-import fi.hsl.gtfsrt2hfp.gtfs.matcher.TripMatcher
+import fi.hsl.gtfsrt2hfp.gtfs.matcher.*
 import fi.hsl.gtfsrt2hfp.gtfs.utils.GtfsIndex
 import fi.hsl.gtfsrt2hfp.gtfs.utils.location
 import fi.hsl.gtfsrt2hfp.hfp.model.HfpPayload
@@ -44,6 +42,7 @@ class GtfsRtToHfpConverter(private val operatorId: String, tripIdCacheDuration: 
 
     private var routeMatcher: RouteMatcher? = null
     private var tripMatcher: TripMatcher? = null
+    private var stopMatcher: StopMatcher? = null
 
     private val geohashCalculator = GeohashCalculator()
 
@@ -66,6 +65,7 @@ class GtfsRtToHfpConverter(private val operatorId: String, tripIdCacheDuration: 
 
         routeMatcher = RouteShortNameRouteMatcher(gtfsIndexB, gtfsIndexA)
         tripMatcher = TripMatcher(gtfsIndexB, gtfsIndexA, routeMatcher!!)
+        stopMatcher = StopCodeStopMatcher(gtfsIndexB, gtfsIndexA)
 
         //Clear cache when GTFS data is updated, because trip IDs might have changed
         tripIdCache.synchronous().invalidateAll()
@@ -95,14 +95,16 @@ class GtfsRtToHfpConverter(private val operatorId: String, tripIdCacheDuration: 
             val stopTimesB = gtfsIndexB!!.stopTimesByTripId[vehicle.trip.tripId]!!
 
             /*
-             * Find matching stop times by arrival and departure times
+             * Find matching stop times
              * This is needed because other GTFS feed might contain stops that the other doesn't
              * (e.g. Matkahuolto GTFS contains stops outside HSL area)
              */
             val matchedStopTimes = stopTimesB.associateBy(
                 keySelector = { it.stopId },
                 valueTransform = { stopTimeB ->
-                    stopTimesA.find { stopTimeA -> stopTimeA.departureTime == stopTimeB.departureTime || stopTimeA.arrivalTime == stopTimeB.arrivalTime }
+                    val stopIdsA = stopMatcher!!.matchStop(stopTimeB.stopId)
+
+                    stopTimesA.find { stopTimeA -> stopIdsA.contains(stopTimeA.stopId) }
                 }
             )
 
