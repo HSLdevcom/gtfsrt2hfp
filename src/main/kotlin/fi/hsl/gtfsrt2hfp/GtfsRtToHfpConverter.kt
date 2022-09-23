@@ -30,7 +30,7 @@ private val log = KotlinLogging.logger {}
 /**
  * @param operatorId Operator ID which is used in the HFP message
  */
-class GtfsRtToHfpConverter(private val operatorId: String, tripIdCacheDuration: Duration = Duration.ofMinutes(20), private val distanceBasedStopStatus: Boolean, private val maxDistanceFromStop: Double?) {
+class GtfsRtToHfpConverter(private val operatorId: String, tripIdCacheDuration: Duration = Duration.ofMinutes(20), private val distanceBasedStopStatus: Boolean, private val maxDistanceFromStop: Double?, private val maxSpeedWhenStopped: Double?) {
     companion object {
         private val NO_DIGIT_REGEX = Regex("\\D")
         private val TST_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSX")
@@ -144,6 +144,8 @@ class GtfsRtToHfpConverter(private val operatorId: String, tripIdCacheDuration: 
                         && currentStopA.location != null
                         && vehicle.position.getLocation() != null
                         && currentStopA.location!!.distanceTo(vehicle.position.getLocation()!!) <= maxDistanceFromStop!!
+                        && vehicle.position.hasSpeed()
+                        && vehicle.position.speed <= maxSpeedWhenStopped!!
             } else {
                 currentStopTimeB?.stopSequence == vehicle.currentStopSequence &&
                         vehicle.currentStatus == GtfsRealtime.VehiclePosition.VehicleStopStatus.STOPPED_AT
@@ -190,7 +192,7 @@ class GtfsRtToHfpConverter(private val operatorId: String, tripIdCacheDuration: 
                 null,
                 startTime,
                 "GPS",
-                if (stoppedAtCurrentStop) { nextStopA?.stopId } else { null },
+                if (stoppedAtCurrentStop) { currentStopA?.stopId } else { null },
                 route.routeId,
                 0
             )

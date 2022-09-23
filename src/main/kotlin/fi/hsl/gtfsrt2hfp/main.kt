@@ -73,6 +73,11 @@ fun main(vararg args: String) {
     } else {
         null
     }
+    val maxSpeedWhenStopped = if (configuration.containsKey("stopStatus.maxSpeedWhenStopped")) {
+        configuration.getString("stopStatus.maxSpeedWhenStopped").toDoubleOrNull()
+    } else {
+        null
+    }
 
     runBlocking {
         val httpClient = OkHttpClient.Builder().callTimeout(Duration.ofMinutes(2)).followRedirects(true).build()
@@ -89,7 +94,7 @@ fun main(vararg args: String) {
 
         val mqttAsyncClient = createAndConnectMqttClient(mqttBrokerUri)
 
-        val gtfsRtToHfpConverter = GtfsRtToHfpConverter(operatorId, distanceBasedStopStatus = distanceBasedStopStatus, maxDistanceFromStop = maxDistanceFromStop)
+        val gtfsRtToHfpConverter = GtfsRtToHfpConverter(operatorId, distanceBasedStopStatus = distanceBasedStopStatus, maxDistanceFromStop = maxDistanceFromStop, maxSpeedWhenStopped = maxSpeedWhenStopped)
 
         log.info { "Starting GTFS-RT2HFP application" }
         //Update GTFS data every 12 hours
