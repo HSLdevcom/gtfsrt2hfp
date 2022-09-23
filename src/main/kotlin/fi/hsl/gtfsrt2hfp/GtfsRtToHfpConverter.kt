@@ -53,6 +53,7 @@ class GtfsRtToHfpConverter(private val operatorId: String, tripIdCacheDuration: 
         .buildAsync { (tripId, startDate) -> tripMatcher!!.matchTrip(tripId, startDate) }
 
     private val visitedStopsCache = VisitedStopsCache()
+    private val stoppedStopsCache = VisitedStopsCache()
 
     private val latestTimestamp: Cache<Pair<String, String>, Long> = Caffeine.newBuilder()
         .expireAfterWrite(Duration.ofMinutes(1)) //TODO: this should be configurable
@@ -97,6 +98,16 @@ class GtfsRtToHfpConverter(private val operatorId: String, tripIdCacheDuration: 
             val stopTimesA = gtfsIndexA!!.stopTimesByTripId[tripId]!!
             val stopTimesB = gtfsIndexB!!.stopTimesByTripId[vehicle.trip.tripId]!!
 
+            val trip = gtfsIndexA!!.tripsById[tripId]!!
+            val route = gtfsIndexA!!.routesById[trip.routeId]!!
+
+            val directionId = (trip.directionId?.plus(1))
+
+            val timestamp = Instant.ofEpochSecond(vehicle.timestamp)
+
+            val firstStopTime = stopTimesA.first()
+            val startTime = formatHfpTime(firstStopTime!!.departureTime!!)
+
             /*
              * Find matching stop times
              * This is needed because other GTFS feed might contain stops that the other doesn't
@@ -111,25 +122,17 @@ class GtfsRtToHfpConverter(private val operatorId: String, tripIdCacheDuration: 
                 }
             )
 
-            val trip = gtfsIndexA!!.tripsById[tripId]!!
-            val route = gtfsIndexA!!.routesById[trip.routeId]!!
-            val firstStopTime = stopTimesA.first()
-
-            val directionId = (trip.directionId?.plus(1))
-
-            val timestamp = Instant.ofEpochSecond(vehicle.timestamp)
-
-            val startTime = formatHfpTime(firstStopTime!!.departureTime!!)
-
             val firstPossibleNextStop = stopTimesB.find { stopTime -> stopTime.stopSequence == vehicle.currentStopSequence }
             //Add stops that are before the next stop in GTFS-RT to visited stops list
             stopTimesB.headSet(firstPossibleNextStop, false).map { it.stopId }.forEach { visitedStopsCache.addVisitedStop(uniqueVehicleId, tripId, it) }
 
             //Current and next stop from GTFS feed B that also has a corresponding stop present in GTFS feed A
+            //Current stop = stop according to GTFS-RT current_stop_sequence
+            //Next stop = next stop of the trip which has not yet been visited
             val currentStopTimeB = stopTimesB.tailSet(firstPossibleNextStop, true).find { matchedStopTimes[it.stopId] != null }
             val nextStopTimeB = stopTimesB.tailSet(firstPossibleNextStop, true).find {
                 matchedStopTimes[it.stopId] != null
-                        && !visitedStopsCache.hasVisitedStop(uniqueVehicleId, tripId, it.stopId) //Next stop meaning a stop that the vehicle has not yet visited
+                        && !visitedStopsCache.hasVisitedStop(uniqueVehicleId, tripId, it.stopId)
             }
 
             val currentStopTimeA = matchedStopTimes[currentStopTimeB?.stopId]
@@ -139,20 +142,36 @@ class GtfsRtToHfpConverter(private val operatorId: String, tripIdCacheDuration: 
             val currentStopA = gtfsIndexA!!.stopsById[currentStopTimeA?.stopId]
             val nextStopA = gtfsIndexA!!.stopsById[nextStopTimeA?.stopId]
 
-            val stoppedAtCurrentStop = if (distanceBasedStopStatus) {
+            val nearCurrentStop =  if (distanceBasedStopStatus) {
                 currentStopA != null
                         && currentStopA.location != null
                         && vehicle.position.getLocation() != null
                         && currentStopA.location!!.distanceTo(vehicle.position.getLocation()!!) <= maxDistanceFromStop!!
-                        && vehicle.position.hasSpeed()
-                        && vehicle.position.speed <= maxSpeedWhenStopped!!
             } else {
                 currentStopTimeB?.stopSequence == vehicle.currentStopSequence &&
                         vehicle.currentStatus == GtfsRealtime.VehiclePosition.VehicleStopStatus.STOPPED_AT
             }
 
-            if (stoppedAtCurrentStop) {
-                currentStopB?.stopId?.let { visitedStopsCache.addVisitedStop(uniqueVehicleId, tripId, it) }
+            val stoppedAtCurrentStop = nearCurrentStop && (!distanceBasedStopStatus || (vehicle.position.hasSpeed() && vehicle.position.speed <= maxSpeedWhenStopped!!))
+
+            currentStopB?.stopId?.let {
+                if (nearCurrentStop) {
+                    visitedStopsCache.addVisitedStop(uniqueVehicleId, tripId, it)
+                }
+                if (stoppedAtCurrentStop) {
+                    stoppedStopsCache.addVisitedStop(uniqueVehicleId, tripId, it)
+                }
+            }
+
+            val hfpNextStopId = if (stoppedAtCurrentStop) {
+                //If vehicle is stopped at current stop, use current stop ID in the topic
+                currentStopA?.stopId
+            } else if (nearCurrentStop && currentStopB != null && !stoppedStopsCache.hasVisitedStop(uniqueVehicleId, tripId, currentStopB.stopId)) {
+                //If near current stop, but not yet stopped at current stop, use current stop ID in the topic
+                currentStopA?.stopId
+            } else {
+                //By default use current stop ID
+                nextStopA?.stopId
             }
 
             val hfpTopic = HfpTopic(
@@ -167,7 +186,7 @@ class GtfsRtToHfpConverter(private val operatorId: String, tripIdCacheDuration: 
                 directionId.toString(),
                 trip.tripHeadsign ?: "",
                 startTime,
-                (if (stoppedAtCurrentStop) { currentStopA } else { nextStopA })?.stopId ?: "",
+                hfpNextStopId,
                 geohashCalculator.getGeohashLevel(operatorId, vehicleId, vehicle.position.latitude.toDouble(), vehicle.position.longitude.toDouble(), nextStopTimeA?.stopId, trip.routeId, startTime, directionId.toString()),
                 getGeohash(vehicle.position.latitude.toDouble(), vehicle.position.longitude.toDouble())
             )
