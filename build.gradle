@@ -27,7 +27,7 @@ dependencies {
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.3"
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.6.3'
 
-    implementation 'ch.qos.logback:logback-classic:1.2.11'
+    implementation 'ch.qos.logback:logback-classic:1.4.1'
     implementation 'io.github.microutils:kotlin-logging-jvm:2.1.23'
 
     implementation "com.squareup.okhttp3:okhttp:4.10.0"
