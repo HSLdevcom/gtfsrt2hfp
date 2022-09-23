@@ -1,8 +1,8 @@
 package fi.hsl.gtfsrt2hfp.gtfs.utils
 
-import fi.hsl.gtfsrt2hfp.gtfs.model.Calendar
-import fi.hsl.gtfsrt2hfp.gtfs.model.CalendarDate
-import org.junit.jupiter.api.Test
+import kotlin.test.Test
+import xyz.malkki.gtfs.model.Calendar
+import xyz.malkki.gtfs.model.CalendarDate
 import java.time.LocalDate
 import kotlin.test.assertContentEquals
 
