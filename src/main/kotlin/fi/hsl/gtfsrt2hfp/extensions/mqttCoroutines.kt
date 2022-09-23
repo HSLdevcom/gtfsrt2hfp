@@ -1,4 +1,4 @@
-package fi.hsl.gtfsrt2hfp.utils
+package fi.hsl.gtfsrt2hfp.extensions
 
 import org.eclipse.paho.client.mqttv3.*
 import kotlin.coroutines.Continuation

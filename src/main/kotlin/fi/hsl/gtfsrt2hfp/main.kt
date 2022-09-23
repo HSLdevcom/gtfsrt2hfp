@@ -1,5 +1,7 @@
 package fi.hsl.gtfsrt2hfp
 
+import fi.hsl.gtfsrt2hfp.extensions.connectAsync
+import fi.hsl.gtfsrt2hfp.extensions.publishAsync
 import fi.hsl.gtfsrt2hfp.gtfs.GtfsFeedFetcher
 import fi.hsl.gtfsrt2hfp.gtfs.merger.mergeWith
 import fi.hsl.gtfsrt2hfp.gtfs.utils.GtfsIndex
@@ -7,9 +9,7 @@ import fi.hsl.gtfsrt2hfp.gtfsrt.GtfsRtFeedFetcher
 import fi.hsl.gtfsrt2hfp.hfp.model.HfpPayload
 import fi.hsl.gtfsrt2hfp.hfp.model.HfpTopic
 import fi.hsl.gtfsrt2hfp.utils.ConfigLoader
-import fi.hsl.gtfsrt2hfp.utils.connectAsync
 import fi.hsl.gtfsrt2hfp.utils.launchTimedTask
-import fi.hsl.gtfsrt2hfp.utils.publishAsync
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch

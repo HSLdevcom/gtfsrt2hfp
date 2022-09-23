@@ -12,6 +12,7 @@ import fi.hsl.gtfsrt2hfp.hfp.model.HfpTopic
 import fi.hsl.gtfsrt2hfp.hfp.utils.GeohashCalculator
 import fi.hsl.gtfsrt2hfp.hfp.utils.formatHfpTime
 import fi.hsl.gtfsrt2hfp.hfp.utils.getGeohash
+import fi.hsl.gtfsrt2hfp.utils.VisitedStopsCache
 import fi.hsl.gtfsrt2hfp.utils.getLocation
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.sync.Mutex
@@ -50,6 +51,8 @@ class GtfsRtToHfpConverter(private val operatorId: String, tripIdCacheDuration: 
     private val tripIdCache: AsyncLoadingCache<Pair<String, String>, String> = Caffeine.newBuilder()
         .expireAfterAccess(tripIdCacheDuration)
         .buildAsync { (tripId, startDate) -> tripMatcher!!.matchTrip(tripId, startDate) }
+
+    private val visitedStopsCache = VisitedStopsCache()
 
     private val latestTimestamp: Cache<Pair<String, String>, Long> = Caffeine.newBuilder()
         .expireAfterWrite(Duration.ofMinutes(1)) //TODO: this should be configurable
@@ -119,10 +122,14 @@ class GtfsRtToHfpConverter(private val operatorId: String, tripIdCacheDuration: 
             val startTime = formatHfpTime(firstStopTime!!.departureTime!!)
 
             val firstPossibleNextStop = stopTimesB.find { stopTime -> stopTime.stopSequence == vehicle.currentStopSequence }
+            //Add stops that are before the next stop in GTFS-RT to visited stops list
+            stopTimesB.headSet(firstPossibleNextStop, false).map { it.stopId }.forEach { visitedStopsCache.addVisitedStop(uniqueVehicleId, tripId, it) }
+
             //Next stop from GTFS feed B that also has a corresponding stop present in GTFS feed A
-            val nextStopTimeB = stopTimesB.tailSet(firstPossibleNextStop, true).find { matchedStopTimes[it.stopId] != null }
+            val nextStopTimeB = stopTimesB.tailSet(firstPossibleNextStop, true).find { matchedStopTimes[it.stopId] != null && !visitedStopsCache.hasVisitedStop(uniqueVehicleId, tripId, it.stopId) }
             val nextStopTimeA = matchedStopTimes[nextStopTimeB?.stopId]
 
+            val nextStopB = gtfsIndexB!!.stopsById[nextStopTimeB?.stopId]
             val nextStopA = nextStopTimeA?.let { gtfsIndexA!!.stopsById[it.stopId] }
 
             val hfpTopic = HfpTopic(
@@ -142,19 +149,18 @@ class GtfsRtToHfpConverter(private val operatorId: String, tripIdCacheDuration: 
                 getGeohash(vehicle.position.latitude.toDouble(), vehicle.position.longitude.toDouble())
             )
 
-            val currentStop = if (distanceBasedStopStatus
-                && nextStopA != null
-                && nextStopA.location != null
-                && vehicle.position.getLocation() != null
-                && nextStopA.location!!.distanceTo(vehicle.position.getLocation()!!) <= maxDistanceFromStop!!) {
-                nextStopA.stopId
-            } else if (
-                nextStopTimeB?.stopSequence == vehicle.currentStopSequence &&
-                vehicle.currentStatus == GtfsRealtime.VehiclePosition.VehicleStopStatus.STOPPED_AT
-            ) {
-                nextStopTimeA?.stopId
+            val stoppedAtCurrentStop = if (distanceBasedStopStatus) {
+                nextStopA != null
+                        && nextStopA.location != null
+                        && vehicle.position.getLocation() != null
+                        && nextStopA.location!!.distanceTo(vehicle.position.getLocation()!!) <= maxDistanceFromStop!!
             } else {
-                null
+                nextStopTimeB?.stopSequence == vehicle.currentStopSequence &&
+                        vehicle.currentStatus == GtfsRealtime.VehiclePosition.VehicleStopStatus.STOPPED_AT
+            }
+
+            if (stoppedAtCurrentStop) {
+                nextStopB?.stopId?.let { visitedStopsCache.addVisitedStop(uniqueVehicleId, tripId, it) }
             }
 
             val hfpPayload = HfpPayload(
@@ -177,7 +183,7 @@ class GtfsRtToHfpConverter(private val operatorId: String, tripIdCacheDuration: 
                 null,
                 startTime,
                 "GPS",
-                currentStop,
+                if (stoppedAtCurrentStop) { nextStopA?.stopId } else { null },
                 route.routeId,
                 0
             )
