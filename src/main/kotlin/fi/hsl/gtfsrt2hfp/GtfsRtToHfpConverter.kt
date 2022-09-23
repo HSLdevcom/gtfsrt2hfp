@@ -125,12 +125,33 @@ class GtfsRtToHfpConverter(private val operatorId: String, tripIdCacheDuration: 
             //Add stops that are before the next stop in GTFS-RT to visited stops list
             stopTimesB.headSet(firstPossibleNextStop, false).map { it.stopId }.forEach { visitedStopsCache.addVisitedStop(uniqueVehicleId, tripId, it) }
 
-            //Next stop from GTFS feed B that also has a corresponding stop present in GTFS feed A
-            val nextStopTimeB = stopTimesB.tailSet(firstPossibleNextStop, true).find { matchedStopTimes[it.stopId] != null && !visitedStopsCache.hasVisitedStop(uniqueVehicleId, tripId, it.stopId) }
+            //Current and next stop from GTFS feed B that also has a corresponding stop present in GTFS feed A
+            val currentStopTimeB = stopTimesB.tailSet(firstPossibleNextStop, true).find { matchedStopTimes[it.stopId] != null }
+            val nextStopTimeB = stopTimesB.tailSet(firstPossibleNextStop, true).find {
+                matchedStopTimes[it.stopId] != null
+                        && !visitedStopsCache.hasVisitedStop(uniqueVehicleId, tripId, it.stopId) //Next stop meaning a stop that the vehicle has not yet visited
+            }
+
+            val currentStopTimeA = matchedStopTimes[currentStopTimeB?.stopId]
             val nextStopTimeA = matchedStopTimes[nextStopTimeB?.stopId]
 
-            val nextStopB = gtfsIndexB!!.stopsById[nextStopTimeB?.stopId]
-            val nextStopA = nextStopTimeA?.let { gtfsIndexA!!.stopsById[it.stopId] }
+            val currentStopB = gtfsIndexB!!.stopsById[currentStopTimeB?.stopId]
+            val currentStopA = gtfsIndexA!!.stopsById[currentStopTimeA?.stopId]
+            val nextStopA = gtfsIndexA!!.stopsById[nextStopTimeA?.stopId]
+
+            val stoppedAtCurrentStop = if (distanceBasedStopStatus) {
+                currentStopA != null
+                        && currentStopA.location != null
+                        && vehicle.position.getLocation() != null
+                        && currentStopA.location!!.distanceTo(vehicle.position.getLocation()!!) <= maxDistanceFromStop!!
+            } else {
+                currentStopTimeB?.stopSequence == vehicle.currentStopSequence &&
+                        vehicle.currentStatus == GtfsRealtime.VehiclePosition.VehicleStopStatus.STOPPED_AT
+            }
+
+            if (stoppedAtCurrentStop) {
+                currentStopB?.stopId?.let { visitedStopsCache.addVisitedStop(uniqueVehicleId, tripId, it) }
+            }
 
             val hfpTopic = HfpTopic(
                 HfpTopic.HFP_V2_PREFIX,
@@ -144,24 +165,10 @@ class GtfsRtToHfpConverter(private val operatorId: String, tripIdCacheDuration: 
                 directionId.toString(),
                 trip.tripHeadsign ?: "",
                 startTime,
-                nextStopTimeA?.stopId ?: "",
+                (if (stoppedAtCurrentStop) { currentStopA } else { nextStopA })?.stopId ?: "",
                 geohashCalculator.getGeohashLevel(operatorId, vehicleId, vehicle.position.latitude.toDouble(), vehicle.position.longitude.toDouble(), nextStopTimeA?.stopId, trip.routeId, startTime, directionId.toString()),
                 getGeohash(vehicle.position.latitude.toDouble(), vehicle.position.longitude.toDouble())
             )
-
-            val stoppedAtCurrentStop = if (distanceBasedStopStatus) {
-                nextStopA != null
-                        && nextStopA.location != null
-                        && vehicle.position.getLocation() != null
-                        && nextStopA.location!!.distanceTo(vehicle.position.getLocation()!!) <= maxDistanceFromStop!!
-            } else {
-                nextStopTimeB?.stopSequence == vehicle.currentStopSequence &&
-                        vehicle.currentStatus == GtfsRealtime.VehiclePosition.VehicleStopStatus.STOPPED_AT
-            }
-
-            if (stoppedAtCurrentStop) {
-                nextStopB?.stopId?.let { visitedStopsCache.addVisitedStop(uniqueVehicleId, tripId, it) }
-            }
 
             val hfpPayload = HfpPayload(
                 route.routeShortName!!,
