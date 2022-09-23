@@ -22,7 +22,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Upload .jar file
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: gtfsrt2hfp.jar
           path: build/libs/gtfsrt2hfp.jar
@@ -34,7 +34,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Download .jar file
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: gtfsrt2hfp.jar
           path: build/libs
@@ -53,7 +53,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Download .jar file
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: gtfsrt2hfp.jar
           path: build/libs
