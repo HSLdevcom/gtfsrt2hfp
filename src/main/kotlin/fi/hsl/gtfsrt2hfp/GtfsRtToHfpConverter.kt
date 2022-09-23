@@ -4,6 +4,7 @@ import com.github.benmanes.caffeine.cache.AsyncLoadingCache
 import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.google.transit.realtime.GtfsRealtime
+import com.google.transit.realtime.GtfsRealtime.VehiclePosition
 import fi.hsl.gtfsrt2hfp.gtfs.matcher.*
 import fi.hsl.gtfsrt2hfp.gtfs.utils.GtfsIndex
 import fi.hsl.gtfsrt2hfp.gtfs.utils.location
@@ -12,6 +13,7 @@ import fi.hsl.gtfsrt2hfp.hfp.model.HfpTopic
 import fi.hsl.gtfsrt2hfp.hfp.utils.GeohashCalculator
 import fi.hsl.gtfsrt2hfp.hfp.utils.formatHfpTime
 import fi.hsl.gtfsrt2hfp.hfp.utils.getGeohash
+import fi.hsl.gtfsrt2hfp.utils.OdometerCalibrator
 import fi.hsl.gtfsrt2hfp.utils.VisitedStopsCache
 import fi.hsl.gtfsrt2hfp.utils.getLocation
 import kotlinx.coroutines.future.await
@@ -55,9 +57,12 @@ class GtfsRtToHfpConverter(private val operatorId: String, tripIdCacheDuration: 
     private val visitedStopsCache = VisitedStopsCache()
     private val stoppedStopsCache = VisitedStopsCache()
 
-    private val latestTimestamp: Cache<Pair<String, String>, Long> = Caffeine.newBuilder()
-        .expireAfterWrite(Duration.ofMinutes(1)) //TODO: this should be configurable
+    //Cache previous positions to be able to filter duplicate positions, calculate average speeds and calibrate odometers
+    private val previousPositionsCache: Cache<Pair<String, String>, VehiclePosition> = Caffeine.newBuilder()
+        .expireAfterWrite(Duration.ofMinutes(5)) //TODO: this should be configurable
         .build()
+
+    private val odometerCalibrator = OdometerCalibrator()
 
     fun hasGtfsData(): Boolean = gtfsIndexA != null && gtfsIndexB != null
 
@@ -75,7 +80,7 @@ class GtfsRtToHfpConverter(private val operatorId: String, tripIdCacheDuration: 
         tripIdCache.synchronous().invalidateAll()
     }
 
-    suspend fun createHfpForVehiclePosition(vehicle: GtfsRealtime.VehiclePosition): Pair<HfpTopic, HfpPayload>? = mutex.withLock {
+    suspend fun createHfpForVehiclePosition(vehicle: VehiclePosition): Pair<HfpTopic, HfpPayload>? = mutex.withLock {
         if (!hasGtfsData()) {
             throw IllegalStateException("No GTFS data available")
         }
@@ -86,9 +91,10 @@ class GtfsRtToHfpConverter(private val operatorId: String, tripIdCacheDuration: 
 
         val uniqueVehicleId = operatorId to vehicleId
 
-        val latestTimestampForVehicle = latestTimestamp.getIfPresent(uniqueVehicleId)
+        val previousPosition = previousPositionsCache.getIfPresent(uniqueVehicleId)
+        val latestTimestampForVehicle = previousPosition?.timestamp
         if (latestTimestampForVehicle != null && latestTimestampForVehicle >= vehicle.timestamp) {
-            log.debug { "Vehicle timestamp (${vehicle.timestamp}) was not newer than previously published (${latestTimestampForVehicle}), ignoring vehicle position..." }
+            log.debug { "Vehicle timestamp for vehicle $uniqueVehicleId (${vehicle.timestamp}) was not newer than previously published (${latestTimestampForVehicle}), ignoring vehicle position..." }
             return null
         }
 
@@ -191,6 +197,8 @@ class GtfsRtToHfpConverter(private val operatorId: String, tripIdCacheDuration: 
                 getGeohash(vehicle.position.latitude.toDouble(), vehicle.position.longitude.toDouble())
             )
 
+            val odoInKilometres = previousPosition?.let { odometerCalibrator.calibrateOdometer(it, vehicle) }
+
             val hfpPayload = HfpPayload(
                 route.routeShortName!!,
                 directionId.toString(),
@@ -204,7 +212,7 @@ class GtfsRtToHfpConverter(private val operatorId: String, tripIdCacheDuration: 
                 vehicle.position.longitude.toDouble(),
                 0.0,
                 null,
-                null,
+                if (odoInKilometres == true) { vehicle.position.odometer * 1000 } else if (odoInKilometres == false) { vehicle.position.odometer } else { null },
                 null,
                 GtfsDateFormat.parseFromString(vehicle.trip.startDate).format(DateTimeFormatter.ISO_LOCAL_DATE),
                 null,
@@ -216,7 +224,7 @@ class GtfsRtToHfpConverter(private val operatorId: String, tripIdCacheDuration: 
                 0
             )
 
-            latestTimestamp.put(uniqueVehicleId, vehicle.timestamp)
+            previousPositionsCache.put(uniqueVehicleId, vehicle)
 
             return hfpTopic to hfpPayload
         }
