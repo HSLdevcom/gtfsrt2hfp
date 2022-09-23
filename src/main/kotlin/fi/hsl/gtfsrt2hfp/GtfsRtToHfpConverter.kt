@@ -12,6 +12,7 @@ import fi.hsl.gtfsrt2hfp.hfp.model.HfpTopic
 import fi.hsl.gtfsrt2hfp.hfp.utils.GeohashCalculator
 import fi.hsl.gtfsrt2hfp.hfp.utils.formatHfpTime
 import fi.hsl.gtfsrt2hfp.hfp.utils.getGeohash
+import fi.hsl.gtfsrt2hfp.utils.VisitedStopsCache
 import fi.hsl.gtfsrt2hfp.utils.getLocation
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.sync.Mutex
@@ -51,10 +52,7 @@ class GtfsRtToHfpConverter(private val operatorId: String, tripIdCacheDuration: 
         .expireAfterAccess(tripIdCacheDuration)
         .buildAsync { (tripId, startDate) -> tripMatcher!!.matchTrip(tripId, startDate) }
 
-    //Keep track of visited stops to handle broken stop status
-    private val visitedStopsCache: Cache<Pair<String, String>, Set<String>> = Caffeine.newBuilder()
-        .expireAfterWrite(Duration.ofHours(2)) //TODO: this should be configurable
-        .build()
+    private val visitedStopsCache = VisitedStopsCache()
 
     private val latestTimestamp: Cache<Pair<String, String>, Long> = Caffeine.newBuilder()
         .expireAfterWrite(Duration.ofMinutes(1)) //TODO: this should be configurable
@@ -96,8 +94,6 @@ class GtfsRtToHfpConverter(private val operatorId: String, tripIdCacheDuration: 
         val tripId = tripIdCache.get(vehicle.trip.tripId to vehicle.trip.startDate).await()
 
         if (tripId != null) {
-            val visitedStopsCacheKey = uniqueVehicleId.toList().joinToString("_") to tripId
-
             val stopTimesA = gtfsIndexA!!.stopTimesByTripId[tripId]!!
             val stopTimesB = gtfsIndexB!!.stopTimesByTripId[vehicle.trip.tripId]!!
 
@@ -126,13 +122,11 @@ class GtfsRtToHfpConverter(private val operatorId: String, tripIdCacheDuration: 
             val startTime = formatHfpTime(firstStopTime!!.departureTime!!)
 
             val firstPossibleNextStop = stopTimesB.find { stopTime -> stopTime.stopSequence == vehicle.currentStopSequence }
-            visitedStopsCache.asMap().compute(visitedStopsCacheKey) { _, existing ->
-                val visitedStops = stopTimesB.headSet(firstPossibleNextStop, false).map { it.stopId }.toMutableSet()
-                existing?.let { visitedStops.addAll(it) }
-                return@compute visitedStops
-            }
+            //Add stops that are before the next stop in GTFS-RT to visited stops list
+            stopTimesB.headSet(firstPossibleNextStop, false).map { it.stopId }.forEach { visitedStopsCache.addVisitedStop(uniqueVehicleId, tripId, it) }
+
             //Next stop from GTFS feed B that also has a corresponding stop present in GTFS feed A
-            val nextStopTimeB = stopTimesB.tailSet(firstPossibleNextStop, true).find { matchedStopTimes[it.stopId] != null && !visitedStopsCache.getIfPresent(visitedStopsCacheKey)!!.contains(it.stopId) }
+            val nextStopTimeB = stopTimesB.tailSet(firstPossibleNextStop, true).find { matchedStopTimes[it.stopId] != null && !visitedStopsCache.hasVisitedStop(uniqueVehicleId, tripId, it.stopId) }
             val nextStopTimeA = matchedStopTimes[nextStopTimeB?.stopId]
 
             val nextStopB = gtfsIndexB!!.stopsById[nextStopTimeB?.stopId]
@@ -166,11 +160,7 @@ class GtfsRtToHfpConverter(private val operatorId: String, tripIdCacheDuration: 
             }
 
             if (stoppedAtCurrentStop) {
-                visitedStopsCache.asMap().compute(visitedStopsCacheKey) { _, existing ->
-                    val visitedStops = (existing ?: emptyList()).toMutableSet()
-                    nextStopB?.stopId?.let { visitedStops.add(it) }
-                    return@compute visitedStops
-                }
+                nextStopB?.stopId?.let { visitedStopsCache.addVisitedStop(uniqueVehicleId, tripId, it) }
             }
 
             val hfpPayload = HfpPayload(
