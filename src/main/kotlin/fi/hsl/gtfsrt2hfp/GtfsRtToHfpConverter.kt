@@ -3,7 +3,6 @@ package fi.hsl.gtfsrt2hfp
 import com.github.benmanes.caffeine.cache.AsyncLoadingCache
 import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
-import com.google.transit.realtime.GtfsRealtime
 import com.google.transit.realtime.GtfsRealtime.VehiclePosition
 import fi.hsl.gtfsrt2hfp.gtfs.matcher.*
 import fi.hsl.gtfsrt2hfp.gtfs.utils.GtfsIndex
@@ -155,10 +154,13 @@ class GtfsRtToHfpConverter(private val operatorId: String, tripIdCacheDuration: 
                         && currentStopA.location!!.distanceTo(vehicle.position.getLocation()!!) <= maxDistanceFromStop!!
             } else {
                 currentStopTimeB?.stopSequence == vehicle.currentStopSequence &&
-                        vehicle.currentStatus == GtfsRealtime.VehiclePosition.VehicleStopStatus.STOPPED_AT
+                        vehicle.currentStatus == VehiclePosition.VehicleStopStatus.STOPPED_AT
             }
 
-            val stoppedAtCurrentStop = nearCurrentStop && (!distanceBasedStopStatus || (vehicle.position.hasSpeed() && vehicle.position.speed <= maxSpeedWhenStopped!!))
+            val stoppedAtCurrentStop = nearCurrentStop &&
+                    !distanceBasedStopStatus //If not using distance based stop status, nearCurrentStop is true only if vehicle is stopped at the stop
+                    || firstStopTime.stopId == currentStopA?.stopId //Create stop event for the first stop even if the vehicle is not stopped to make sure that it gets displayed in Reittiloki
+                    || (vehicle.position.hasSpeed() && vehicle.position.speed <= maxSpeedWhenStopped!!)
 
             currentStopB?.stopId?.let {
                 if (nearCurrentStop) {
