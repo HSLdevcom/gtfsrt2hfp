@@ -158,9 +158,9 @@ class GtfsRtToHfpConverter(private val operatorId: String, tripIdCacheDuration: 
             }
 
             val stoppedAtCurrentStop = nearCurrentStop &&
-                    !distanceBasedStopStatus //If not using distance based stop status, nearCurrentStop is true only if vehicle is stopped at the stop
-                    || firstStopTime.stopId == currentStopA?.stopId //Create stop event for the first stop even if the vehicle is not stopped to make sure that it gets displayed in Reittiloki
-                    || (vehicle.position.hasSpeed() && vehicle.position.speed <= maxSpeedWhenStopped!!)
+                    (!distanceBasedStopStatus //If not using distance based stop status, nearCurrentStop is true only if vehicle is stopped at the stop
+                            || (firstStopTime.stopId == currentStopA?.stopId //Create stop event for the first stop even if the vehicle is not stopped to make sure that it gets displayed in Reittiloki
+                                || (vehicle.position.hasSpeed() && vehicle.position.speed <= maxSpeedWhenStopped!!)))
 
             currentStopB?.stopId?.let {
                 if (nearCurrentStop) {
