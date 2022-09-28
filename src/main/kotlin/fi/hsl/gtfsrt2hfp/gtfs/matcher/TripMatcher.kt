@@ -46,7 +46,7 @@ class TripMatcher(private val gtfsIndexA: GtfsIndex, private val gtfsIndexB: Gtf
 
         stopTimesA.forEach { stopTimeA ->
             val matchFound = stopTimesB.find { stopTimeB ->
-                (isSameTime(stopTimeA.arrivalTime, stopTimeA.arrivalTime) || isSameTime(stopTimeB.departureTime, stopTimeB.departureTime)) && stopMatcher.matchStop(stopTimeA.stopId).contains(stopTimeB.stopId)
+                (isSameTime(stopTimeA.arrivalTime, stopTimeB.arrivalTime) || isSameTime(stopTimeB.departureTime, stopTimeA.departureTime)) && stopMatcher.matchStop(stopTimeA.stopId).contains(stopTimeB.stopId)
             } != null
 
             if (matchFound && ++matchedCount >= NUM_SAME_STOP_TIMES) {
