@@ -3,11 +3,14 @@ package fi.hsl.gtfsrt2hfp.gtfs.matcher
 import fi.hsl.gtfsrt2hfp.gtfs.utils.GtfsIndex
 import xyz.malkki.gtfs.model.StopTime
 import xyz.malkki.gtfs.utils.GtfsDateFormat
+import kotlin.math.abs
 
 //TODO: extract interface
 class TripMatcher(private val gtfsIndexA: GtfsIndex, private val gtfsIndexB: GtfsIndex, private val routeMatcher: RouteMatcher) {
     companion object {
-        private val NUM_SAME_STOP_TIMES = 3 //TODO: make this configurable
+        //TODO: make these configurable
+        private const val NUM_SAME_STOP_TIMES = 3
+        private const val MAX_TIME_DIFF_SECS = 4*60
     }
 
     private val stopMatcher = StopCodeStopMatcher(gtfsIndexA, gtfsIndexB)
@@ -30,12 +33,20 @@ class TripMatcher(private val gtfsIndexA: GtfsIndex, private val gtfsIndexB: Gtf
         }?.tripId
     }
 
+    private fun isSameTime(timeA: Int?, timeB: Int?): Boolean {
+        if (timeA == null || timeB == null) {
+            return false
+        }
+
+        return abs(timeA - timeB) <= MAX_TIME_DIFF_SECS
+    }
+
     private fun fuzzyIsSameTrip(stopTimesA: Collection<StopTime>, stopTimesB: Collection<StopTime>): Boolean {
         var matchedCount = 0
 
         stopTimesA.forEach { stopTimeA ->
             val matchFound = stopTimesB.find { stopTimeB ->
-                (stopTimeA.arrivalTime == stopTimeB.arrivalTime || stopTimeA.departureTime == stopTimeB.departureTime) && stopMatcher.matchStop(stopTimeA.stopId).contains(stopTimeB.stopId)
+                (isSameTime(stopTimeA.arrivalTime, stopTimeA.arrivalTime) || isSameTime(stopTimeB.departureTime, stopTimeB.departureTime)) && stopMatcher.matchStop(stopTimeA.stopId).contains(stopTimeB.stopId)
             } != null
 
             if (matchFound && ++matchedCount >= NUM_SAME_STOP_TIMES) {
