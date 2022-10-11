@@ -9,8 +9,8 @@ import kotlin.math.abs
 class TripMatcher(private val gtfsIndexA: GtfsIndex, private val gtfsIndexB: GtfsIndex, private val routeMatcher: RouteMatcher) {
     companion object {
         //TODO: make these configurable
-        private const val NUM_SAME_STOP_TIMES = 3
-        private const val MAX_TIME_DIFF_SECS = 4*60
+        private const val NUM_SAME_STOP_TIMES = 5
+        private const val MAX_TIME_DIFF_SECS = 3*60
     }
 
     private val stopMatcher = StopCodeStopMatcher(gtfsIndexA, gtfsIndexB)
