@@ -127,7 +127,12 @@ class GtfsRtToHfpConverter(private val operatorId: String, tripIdCacheDuration: 
                 }
             )
 
-            val firstPossibleNextStop = stopTimesB.find { stopTime -> stopTime.stopSequence == vehicle.currentStopSequence }
+            val firstPossibleNextStop = stopTimesB.find { stopTime -> stopTime.stopSequence >= vehicle.currentStopSequence }
+            if (firstPossibleNextStop == null) {
+                log.warn { "No next possible stop found for vehicle ${vehicle.vehicle.id}, stop seq: ${vehicle.currentStopSequence}, stops of the trip: ${stopTimesB.joinToString { "${it.stopSequence}: ${it.stopId}" }}" }
+                return null
+            }
+
             //Add stops that are before the next stop in GTFS-RT to visited stops list
             stopTimesB.headSet(firstPossibleNextStop, false).map { it.stopId }.forEach { visitedStopsCache.addVisitedStop(uniqueVehicleId, tripId, it) }
 
