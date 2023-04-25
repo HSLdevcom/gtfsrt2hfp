@@ -33,7 +33,8 @@ routeIds = 7280 #Route IDs from HSL GTFS feed for which HFP is produved
 hfp.operatorId = 9999 #Operator ID which will be used in HFP messages
 ```
 
-Alternatively, environment variables can be used for configuration. See file 
+Alternatively, environment variables can be used for configuration. See file `env.properties` in the resources folder.
+
 
 ## Versioning
 
