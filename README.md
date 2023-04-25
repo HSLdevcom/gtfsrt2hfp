@@ -33,6 +33,8 @@ routeIds = 7280 #Route IDs from HSL GTFS feed for which HFP is produved
 hfp.operatorId = 9999 #Operator ID which will be used in HFP messages
 ```
 
+Alternatively, environment variables can be used for configuration. See file 
+
 ## Versioning
 
 This application uses calendar versioning with the following pattern: `YYYYMMDD`. New versions can be published by creating a release in GitHub. The Docker image of this application uses `develop` tag for the latest build of master branch and `latest` tag for the latest build made from a tagged commit.  Specific versions are also available with the same Docker tag as the Git tag of the version.
